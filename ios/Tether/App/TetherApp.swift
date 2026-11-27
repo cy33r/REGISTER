@@ -135,6 +135,7 @@ struct TetherApp: App {
     private var content: some View {
         RootView()
             .environment(\.font, .v(.body))
+            .environment(\.locale, Fa.locale)
             .environment(\.appModel, AppModel.shared)
             .environment(\.router, Router.shared)
             .onOpenURL { Router.shared.open(url: $0) }

@@ -75,3 +75,26 @@ extension Font {
         return style == .headline ? f.weight(.semibold) : f
     }
 }
+
+/// REGISTER: numbers and dates as a Persian reader expects them: Persian digits and the Persian (Solar Hijri) calendar.
+/// Phone numbers, codes and the version are plain strings and are not touched.
+enum Fa {
+    static let locale = Locale(identifier: "fa_IR")
+    static let calendar: Calendar = { var c = Calendar(identifier: .persian); c.locale = locale; return c }()
+
+    /// Like `Date.formatted(date:time:)`, in Persian.
+    static func style(date: Date.FormatStyle.DateStyle? = nil, time: Date.FormatStyle.TimeStyle? = nil) -> Date.FormatStyle {
+        Date.FormatStyle(date: date, time: time, locale: locale, calendar: calendar)
+    }
+
+    /// Like `.dateTime`, in Persian: add the fields (`.day().month(.abbreviated)`).
+    static var dateTime: Date.FormatStyle { Date.FormatStyle(locale: locale, calendar: calendar) }
+
+    /// A call or recording duration (`m:ss`) in Persian digits.
+    static func duration(_ seconds: Int) -> String {
+        Duration.seconds(seconds).formatted(.time(pattern: .minuteSecond).locale(locale))
+    }
+
+    /// An integer in Persian digits.
+    static func number(_ n: Int) -> String { n.formatted(.number.locale(locale)) }
+}

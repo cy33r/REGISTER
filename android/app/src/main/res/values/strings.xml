@@ -31,7 +31,7 @@
     <string name="help_permissions">«اعطا» را بزنید و همهٔ مجوزها را بدهید. اطلاعات فقط به آیفون خودتان می‌رود.</string>
     <string name="help_dialer">«تنظیم» را بزنید و REGISTER را برنامهٔ تلفن پیش‌فرض کنید.</string>
     <string name="help_battery">«تنظیم» را بزنید و «بدون محدودیت» را انتخاب کنید تا برنامه در پس‌زمینه بسته نشود.</string>
-    <string name="help_adb">برای رساندن صدای تماس لازم است، فقط یک بار و با Wi-Fi. «جفت کردن» را بزنید، اشکال‌زدایی بی‌سیم را روشن کنید، «جفت کردن دستگاه با کد» را بزنید و کد ۶ رقمی را در اعلان REGISTER وارد کنید.</string>
+    <string name="help_adb">برای رساندن صدای تماس لازم است، فقط یک بار و با WI-FI. «جفت کردن» را بزنید، اشکال‌زدایی بی‌سیم را روشن کنید، «جفت کردن دستگاه با کد» را بزنید و کد ۶ رقمی را در اعلان REGISTER وارد کنید.</string>
     <string name="help_pair_next">مرحلهٔ بعد: در بالا «جفت کردن آیفون» را بزنید.</string>
     <string name="pair_old_app">نمایش کد برای نسخه‌های قدیمی آیفون</string>
     <string name="pair_new_code">کد جدید را نشان بده</string>
@@ -46,7 +46,7 @@
     <string name="action_pair">جفت کردن</string>
     <string name="action_start">شروع</string>
     <string name="action_selftest">آزمون صدای تماس</string>
-    <string name="step_adb_tcp">اشکال‌زدایی TCP (بدون Wi-Fi)</string>
+    <string name="step_adb_tcp">اشکال‌زدایی TCP (بدون WI-FI)</string>
     <string name="adb_tcp_on">روشن، درگاه %1$d</string>
     <string name="adb_tcp_off">خاموش</string>
     <string name="action_enable">فعال‌سازی</string>
@@ -57,9 +57,9 @@
     <string name="action_copy">کپی</string>
     <string name="copied">کپی شد</string>
     <string name="adb_tcp_howto">یک بار گوشی را با USB به رایانه وصل کنید، دستور adb tcpip 5555 را اجرا کنید و پیام گوشی را بپذیرید. بعد از هر ری‌استارت باید تکرار شود.</string>
-    <string name="adb_tcp_connecting">در حال اتصال به adb روی 127.0.0.1…</string>
+    <string name="adb_tcp_connecting">در حال اتصال به ADB روی 127.0.0.1…</string>
     <string name="adb_tcp_connected">وصل شد. دستیار صدا در حال شروع است…</string>
-    <string name="adb_tcp_failed">اتصال به adb روی درگاه %1$d ممکن نشد. از رایانه دستور adb tcpip %1$d را اجرا کنید و پیام کلید را بپذیرید.</string>
+    <string name="adb_tcp_failed">اتصال به ADB روی درگاه %1$d ممکن نشد. از رایانه دستور adb tcpip %1$d را اجرا کنید و پیام کلید را بپذیرید.</string>
     <string name="done">انجام شد</string>
     <string name="missing">لازم است</string>
     <string name="helper_running">در حال اجرا (%1$s)</string>
@@ -118,7 +118,7 @@
     <string name="uplink_off">مشکلی نیست</string>
     <string name="uplink_unverified">قابل بررسی نیست</string>
     <string name="adb_code_format">کد ۶ رقمی‌ای را که زیر «جفت کردن دستگاه با کد» نشان داده می‌شود وارد کنید.</string>
-    <string name="adb_no_wifi">اشکال‌زدایی بی‌سیم به Wi-Fi نیاز دارد. به یک شبکه Wi-Fi وصل شوید، دوباره «جفت کردن دستگاه با کد» را باز کنید و کد جدید را وارد کنید.</string>
+    <string name="adb_no_wifi">اشکال‌زدایی بی‌سیم به WI-FI نیاز دارد. به یک شبکه WI-FI وصل شوید، دوباره «جفت کردن دستگاه با کد» را باز کنید و کد جدید را وارد کنید.</string>
     <string name="adb_no_service">پنجرهٔ «جفت کردن دستگاه با کد» باید باز بماند. اعلان را روی همان صفحه پایین بکشید و کد را وارد کنید.</string>
     <string name="adb_wrong_code">کد اشتباه بود یا منقضی شده است. دوباره «جفت کردن دستگاه با کد» را باز کنید و کد ۶ رقمی جدید را وارد کنید.</string>
     <string name="adb_paired_no_connect">جفت شد، اما هنوز وصل نشده (%1$s). REGISTER دوباره تلاش می‌کند.</string>

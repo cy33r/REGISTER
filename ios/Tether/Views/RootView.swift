@@ -93,7 +93,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { model.showCallScreen && model.callScreen != nil },
                                               set: { model.showCallScreen = $0 })) {
             // Presented content does not always inherit environment objects: pass them explicitly.
-            InCallView().environment(\.font, .v(.body)).environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
+            InCallView().environment(\.font, .v(.body)).environment(\.locale, Fa.locale).environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
         }
         .tint(Color("AccentColor"))
         .task {
@@ -294,9 +294,9 @@ extension Date {
 
 func shortTime(_ ms: Int64) -> String {
     let d = Date(millis: ms)
-    if Calendar.current.isDateInToday(d) { return d.formatted(date: .omitted, time: .shortened) }
+    if Calendar.current.isDateInToday(d) { return d.formatted(Fa.style(date: .omitted, time: .shortened)) }
     if Calendar.current.isDateInYesterday(d) { return String(localized: "Yesterday") }
-    return d.formatted(.dateTime.day().month(.abbreviated))
+    return d.formatted(Fa.dateTime.day().month(.abbreviated))
 }
 
 

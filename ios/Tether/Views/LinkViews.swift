@@ -37,7 +37,7 @@ struct LinkView: View {
 
                     Section {
                         Label {
-                            Text("Tether keeps the link in the background and when the screen is locked. Swiping Tether away in the app switcher stops it until you open it again: iOS does not relaunch a force-quit app for Bluetooth.")
+                            JustifiedText("Tether keeps the link in the background and when the screen is locked. Swiping Tether away in the app switcher stops it until you open it again: iOS does not relaunch a force-quit app for Bluetooth.")
                                 .font(.v(.footnote))
                         } icon: {
                             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
@@ -108,7 +108,7 @@ struct LinkView: View {
                     } header: {
                         Text("Internet")
                     } footer: {
-                        Text("Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it.")
+                        JustifiedText("Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it.")
                     }
                     VPNSection().id("vpn")
                     if let t = s.tools, t.ussd == true || t.find == true || t.ringer == true {
@@ -117,11 +117,9 @@ struct LinkView: View {
                     Section {
                         LabeledContent("Audio helper", value: s.helper.state == "running" ? String(localized: "Running") : String(localized: "Stopped"))
                         if s.helper.audioUnavailable {
-                            Text("Call audio is not available on this Android phone: it needs Android 11 or later. Calls are still answered, placed and ended here, but you hear and speak on the Android phone.")
-                                .font(.v(.footnote)).foregroundStyle(.orange)
+                            JustifiedText("Call audio is not available on this Android phone: it needs Android 11 or later. Calls are still answered, placed and ended here, but you hear and speak on the Android phone.", color: .systemOrange)
                         } else if s.helper.audioBlocked {
-                            Text("This Android phone's software gives Tether no call audio (the call sounds like silence to it). Calls are still answered, placed and ended here, but you hear and speak on the Android phone. A system update, or a self-test during a call that hears the call, turns call audio back on. If calls on the phone itself have no sound either, restart the phone once.")
-                                .font(.v(.footnote)).foregroundStyle(.orange)
+                            JustifiedText("This Android phone's software gives Tether no call audio (the call sounds like silence to it). Calls are still answered, placed and ended here, but you hear and speak on the Android phone. A system update, or a self-test during a call that hears the call, turns call audio back on. If calls on the phone itself have no sound either, restart the phone once.", color: .systemOrange)
                         }
                         if let m = s.helper.method { LabeledContent("Inject method", value: m) }
                         if let m = s.helper.capture { LabeledContent("Capture method", value: m) }
@@ -176,9 +174,9 @@ struct LinkView: View {
                         Text("Call audio")
                     } footer: {
                         if let mic = s.helper.mic {
-                            Text(CallAudioRows.micFooter(mic))
+                            JustifiedText(verbatim: CallAudioRows.micFooter(mic))
                         } else if CallAudioRows.showsMicToggle(s) {
-                            Text("Off is safest: on some Android phones muting their microphone also mutes your voice for the other side. When it is on, Tether checks during each call and turns the mute off if your voice does not get through.")
+                            JustifiedText("Off is safest: on some Android phones muting their microphone also mutes your voice for the other side. When it is on, Tether checks during each call and turns the mute off if your voice does not get through.")
                         }
                     }
                 }
@@ -196,12 +194,12 @@ struct LinkView: View {
                         }
                     }
                 } footer: {
-                    Text("Kept on the Android phone and shared by all your devices.")
+                    JustifiedText("Kept on the Android phone and shared by all your devices.")
                 }
 
                 Section {
                     if let last = model.lastSync {
-                        LabeledContent("Last sync", value: last.formatted(date: .omitted, time: .shortened))
+                        LabeledContent("Last sync", value: last.formatted(Fa.style(date: .omitted, time: .shortened)))
                     }
                     NavigationLink("Send a problem report") { ProblemReportView() }
                     NavigationLink("Advanced") { AdvancedView() }
@@ -302,8 +300,6 @@ private struct SetupGuideSection: View {
 
                 if linkState == .poweredOff {
                     Text("Turn on Bluetooth in Settings on this device before pairing.")
-                        .font(.v(.footnote))
-                        .foregroundStyle(.secondary)
                 }
 
                 Button(action: scan) {
@@ -347,7 +343,7 @@ private struct SetupGuideSection: View {
 
     private func step(_ number: Int, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(number.formatted())
+            Text(Fa.number(number))
                 .font(.v(.subheadline).weight(.semibold).monospacedDigit())
                 .foregroundStyle(accent)
                 .padding(.horizontal, 10)
@@ -396,7 +392,7 @@ struct AdvancedView: View {
                 Button("Sync everything again") { model.requestSync(full: true) }.disabled(!model.linkState.isConnected)
                 NavigationLink("Link log") { LinkLogView() }
             } footer: {
-                Text("For finding problems. Everyday use does not need these.")
+                JustifiedText("For finding problems. Everyday use does not need these.")
             }
         }
         .navigationTitle("Advanced")
@@ -436,7 +432,7 @@ struct AboutSection: View {
         } header: {
             Text("About")
         } footer: {
-            Text("Opens the releases page in Safari. The app itself sends nothing to the internet.")
+            JustifiedText("Opens the releases page in Safari. The app itself sends nothing to the internet.")
         }
     }
 }
@@ -462,7 +458,7 @@ struct VPNSection: View {
         } header: {
             Text("VPN")
         } footer: {
-            Text("Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app.")
+            JustifiedText("Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app.")
         }
     }
 }
@@ -490,14 +486,14 @@ struct IPhoneProxySetup: View {
                             Image(systemName: "doc.on.doc")
                         }.buttonStyle(.borderless)
                     }
-                    Text("Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL.")
+                    JustifiedText("Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL.")
                         .foregroundStyle(.secondary)
                     BluetoothProxyNote(proxy: proxy)
                 }
                 .font(.v(.footnote))
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Turn on the Wi-Fi hotspot to see the address to use.")
+                    JustifiedText("Turn on the Wi-Fi hotspot to see the address to use.")
                     BluetoothProxyNote(proxy: proxy)
                 }
                 .font(.v(.footnote)).foregroundStyle(.secondary)
@@ -516,7 +512,7 @@ struct BluetoothProxyNote: View {
         let bt = proxy?.addrs.first(where: { $0.kind == "bt" })
         let port = proxy?.port ?? 8118
         VStack(alignment: .leading, spacing: 4) {
-            Text("Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN.")
+            JustifiedText("Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN.")
                 .fontWeight(.semibold)
             Text("Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server \(bt?.ip ?? "192.168.44.1"):\(String(port)) there and turn it on.")
                 .foregroundStyle(.secondary)
@@ -583,8 +579,7 @@ struct ProblemReportView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if report != nil {
-                Text("Phone numbers, names, message text, e-mail, addresses and keys are removed. Read it before you post it.")
-                    .font(.v(.footnote)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Text("Phone numbers, names, message text, e-mail, addresses and keys are removed. Read it before you post it.").multilineTextAlignment(.center)
                     .padding(.horizontal).padding(.vertical, 8).frame(maxWidth: .infinity)
                     .background(Color(.systemGroupedBackground))
             }
@@ -628,9 +623,9 @@ struct BlockedListView: View {
                 }
             } footer: {
                 if model.blockLists.system == true {
-                    Text("This is the Android phone's own block list: it refuses these calls and messages itself, whichever device you use.")
+                    JustifiedText("This is the Android phone's own block list: it refuses these calls and messages itself, whichever device you use.")
                 } else {
-                    Text("Tether rejects these calls and does not forward these messages to your devices.")
+                    JustifiedText("Tether rejects these calls and does not forward these messages to your devices.")
                 }
             }
         }
@@ -655,7 +650,7 @@ struct PhoneLinksSection: View {
         } header: {
             Text("Numbers in other apps")
         } footer: {
-            Text("Calls made here also appear in the Phone app's Recents; tapping one calls back through the Android phone. To call numbers you tap in other apps, choose this app in Settings › Apps › Default Apps › Calling (needs a paid Apple developer account), or use the \"Call with\" shortcut in the Shortcuts app.")
+            JustifiedText("Calls made here also appear in the Phone app's Recents; tapping one calls back through the Android phone. To call numbers you tap in other apps, choose this app in Settings › Apps › Default Apps › Calling (needs a paid Apple developer account), or use the \"Call with\" shortcut in the Shortcuts app.")
         }
     }
 }
@@ -669,13 +664,13 @@ struct SigningSection: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(days == 0 ? String(localized: "Today") : String(localized: "in \(days) days"))
                             .foregroundStyle(days <= 2 ? Color.red : (days <= 4 ? Color.orange : Color.primary))
-                        Text(expiry.formatted(date: .abbreviated, time: .shortened)).font(.v(.caption)).foregroundStyle(.secondary)
+                        Text(expiry.formatted(Fa.style(date: .abbreviated, time: .shortened))).font(.v(.caption)).foregroundStyle(.secondary)
                     }
                 }
             } header: {
                 Text("Renewal")
             } footer: {
-                Text("Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days.")
+                JustifiedText("Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days.")
             }
         }
     }
@@ -784,14 +779,14 @@ struct PhoneToolsSection: View {
                 } label: { Label("Ringer", systemImage: "bell") }
                 .disabled(!model.linkState.isConnected)
                 if status.dnd == false {
-                    Text("Silent needs Do Not Disturb access for Tether on the Android phone.").font(.v(.footnote)).foregroundStyle(.secondary)
+                    JustifiedText("Silent needs Do Not Disturb access for Tether on the Android phone.")
                 }
             }
             if let e = model.phoneToolError { Text(e).font(.v(.footnote)).foregroundStyle(.red) }
         } header: {
             Text("Phone tools")
         } footer: {
-            Text("Carrier codes are sent from the Android phone's SIM and may cost money. Find phone rings the Android phone loudly for up to 30 seconds, until it is unlocked or you switch it off.")
+            JustifiedText("Carrier codes are sent from the Android phone's SIM and may cost money. Find phone rings the Android phone loudly for up to 30 seconds, until it is unlocked or you switch it off.")
         }
     }
 }
@@ -1003,7 +998,7 @@ struct ManualPairingView: View {
                     if let error {
                         Label(error, systemImage: "exclamationmark.circle").foregroundStyle(.orange)
                     } else {
-                        Text("Paste a pairing link or type the code from Tether on your Android phone.")
+                        JustifiedText("Paste a pairing link or type the code from Tether on your Android phone.")
                     }
                 }
             }

@@ -337,13 +337,13 @@ struct ThreadView: View {
 func transcriptTime(_ ms: Int64) -> String {
     let d = Date(millis: ms)
     let cal = Calendar.current
-    let time = d.formatted(date: .omitted, time: .shortened)
+    let time = d.formatted(Fa.style(date: .omitted, time: .shortened))
     if cal.isDateInToday(d) { return String(localized: "Today") + " " + time }
     if cal.isDateInYesterday(d) { return String(localized: "Yesterday") + " " + time }
     if let days = cal.dateComponents([.day], from: cal.startOfDay(for: d), to: cal.startOfDay(for: .now)).day, days < 7 {
-        return d.formatted(.dateTime.weekday(.abbreviated)) + " " + time
+        return d.formatted(Fa.dateTime.weekday(.abbreviated)) + " " + time
     }
-    return d.formatted(.dateTime.day().month(.abbreviated).year()) + " " + time
+    return d.formatted(Fa.dateTime.day().month(.abbreviated).year()) + " " + time
 }
 
 /// Message bubble outline: a rounded rectangle, with the small tail Messages draws on the last bubble of a run.
@@ -469,7 +469,7 @@ struct Bubble: View {
         }
         Divider()
         Button(role: .destructive) { hideKeyboard(); confirmDelete = true } label: { Label("Delete", systemImage: "trash") }
-        Text(Date(millis: message.date).formatted(date: .abbreviated, time: .shortened))
+        Text(Date(millis: message.date).formatted(Fa.style(date: .abbreviated, time: .shortened)))
     }
 }
 

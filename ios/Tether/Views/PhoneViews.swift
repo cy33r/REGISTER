@@ -30,7 +30,7 @@ struct RecentsView: View {
                                 Text(sim).font(.v(.caption2)).padding(.horizontal, 5)
                                     .background(Color(.tertiarySystemFill), in: Capsule())
                             }
-                            if e.dur > 0 { Text(Duration.seconds(e.dur).formatted(.time(pattern: .minuteSecond))) }
+                            if e.dur > 0 { Text(Fa.duration(Int(e.dur))) }
                         }
                         .font(.v(.caption)).foregroundStyle(.secondary)
                     }

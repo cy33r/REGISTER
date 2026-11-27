@@ -113,7 +113,7 @@ class MainActivity : Activity() {
         val conn = app.hub.conn
         val (state, stateColor) = when {
             svc?.peripheral?.enabled == false -> getString(R.string.state_bt_off) to R.color.bad
-            conn?.isUp == true -> getString(R.string.state_connected) + " · " + conn.transport.label to R.color.ok
+            conn?.isUp == true -> getString(R.string.state_connected) + " · " + conn.transport.label.uppercase() to R.color.ok
             !app.keys.isPaired -> getString(R.string.state_unpaired) to R.color.warn
             else -> getString(R.string.state_waiting) to R.color.muted
         }
@@ -263,8 +263,8 @@ class MainActivity : Activity() {
         if (tcpOn) adv.addView(button(getString(R.string.action_turn_off), secondary = true) {
             app.prefs.edit().putBoolean(Adb.PREF_LEGACY, false).apply(); Adb.reset(); render()
         })
-        if (running) adv.addView(label(getString(R.string.helper_running, h.optString("method", "auto")) +
-            (h.optString("capture").takeIf { it.isNotEmpty() }?.let { " · " + getString(R.string.helper_capture, it) } ?: ""), R.color.muted, 13f))
+        if (running) adv.addView(label(getString(R.string.helper_running, h.optString("method", "auto").uppercase()) +
+            (h.optString("capture").takeIf { it.isNotEmpty() }?.let { " · " + getString(R.string.helper_capture, it.uppercase()) } ?: ""), R.color.muted, 13f))
         app.hub.lastSelftest?.let { st ->
             val methods = st.optJSONArray("methods")
             val txt = (0 until (methods?.length() ?: 0)).joinToString("\n") {

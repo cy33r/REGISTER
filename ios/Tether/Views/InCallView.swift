@@ -192,7 +192,7 @@ struct CallStatusText: View {
         case "ended": String(localized: "Call ended")
         default:
             if let t = call.connectedAt {
-                Duration.seconds(Int(now.timeIntervalSince(t))).formatted(.time(pattern: .minuteSecond))
+                Fa.duration(Int(now.timeIntervalSince(t)))
             } else { "" }
         }
     }

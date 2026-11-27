@@ -155,11 +155,11 @@
 /* VPN and Share VPN */
 "Share VPN" = "اشتراک VPN";
 "Use it on this iPhone" = "استفاده روی این آیفون";
-"1. Join the Android phone's hotspot in Settings › Wi-Fi." = "۱. در تنظیمات › Wi-Fi به هات‌اسپات گوشی اندروید وصل شوید.";
+"1. Join the Android phone's hotspot in Settings › Wi-Fi." = "۱. در تنظیمات › WI-FI به هات‌اسپات گوشی اندروید وصل شوید.";
 "2. Tap ⓘ next to it › Configure Proxy › Automatic." = "۲. روی ⓘ کنار آن بزنید › پیکربندی پراکسی › خودکار.";
 "3. Paste this URL and tap Save:" = "۳. این نشانی را بچسبانید و ذخیره را بزنید:";
 "Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL." = "یک بار کافی است: با «اشتراک VPN» روشن، برنامه‌های این آیفون روی هات‌اسپات از VPN گوشی استفاده می‌کنند و با خاموش بودنش مستقیم وصل می‌شوند. اگر نشانی هات‌اسپات عوض شد، نشانی را به‌روز کنید.";
-"Turn on the Wi-Fi hotspot to see the address to use." = "هات‌اسپات Wi-Fi را روشن کنید تا نشانی نمایش داده شود.";
+"Turn on the Wi-Fi hotspot to see the address to use." = "هات‌اسپات WI-FI را روشن کنید تا نشانی نمایش داده شود.";
 "Copied" = "کپی شد";
 
 /* Round 5 */
@@ -167,7 +167,7 @@
 "No events yet." = "هنوز رویدادی نیست.";
 "VPN on the Android phone" = "‏VPN روی گوشی اندروید";
 "Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN." = "اشتراک اینترنت با بلوتوث خودبه‌خود از VPN استفاده نمی‌کند: آیفون برای آن تنظیم پراکسی ندارد. برای VPN از هات‌اسپات استفاده کنید.";
-"Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server %@:%@ there and turn it on." = "فقط یک برنامهٔ پراکسی روی این آیفون (مثلاً V2Box) می‌تواند از راه بلوتوث از آن استفاده کند: در آن یک سرور SOCKS5 با نشانی %1$@:%2$@ بسازید و روشنش کنید.";
+"Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server %@:%@ there and turn it on." = "فقط یک برنامهٔ پراکسی روی این آیفون (مثلاً V2BOX) می‌تواند از راه بلوتوث از آن استفاده کند: در آن یک سرور SOCKS5 با نشانی %1$@:%2$@ بسازید و روشنش کنید.";
 "Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app." = "‏VPN را در برنامهٔ خودش روی گوشی اندروید روشن کنید. هات‌اسپات و اشتراک بلوتوث گوشی از آن عبور نمی‌کنند (اندروید ترافیک اشتراکی را مستقیم می‌فرستد)، برای همین «اشتراک VPN» یک پراکسی روی گوشی اجرا می‌کند که ترافیکش از VPN می‌گذرد. این آیفون از راه هات‌اسپات (یک بار تنظیم پراکسی) و از راه بلوتوث فقط با یک برنامهٔ پراکسی می‌تواند از آن استفاده کند.";
 "No service" = "بدون آنتن";
 "Favourites" = "علاقه‌مندی‌ها";
@@ -178,9 +178,9 @@
 "Search name or number" = "جستجوی نام یا شماره";
 "Airplane mode" = "حالت هواپیما";
 "Network · %@" = "شبکه · %@";
-"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it." = "برای استفاده از اینترنت گوشی اندروید، هات‌اسپات را روشن کنید و در تنظیمات › Wi-Fi به آن وصل شوید. اشتراک بلوتوث کندتر است: پس از روشن کردن، در تنظیمات › بلوتوث روی گوشی اندروید بزنید. حالت هواپیما بلوتوث را روشن نگه می‌دارد تا این اتصال برقرار بماند؛ اگر اتصال تا ۹۰ ثانیه برنگردد، خودش خاموش می‌شود. هات‌اسپات و اشتراک بلوتوث پس از آن دوباره روشن می‌شوند.";
+"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it." = "برای استفاده از اینترنت گوشی اندروید، هات‌اسپات را روشن کنید و در تنظیمات › WI-FI به آن وصل شوید. اشتراک بلوتوث کندتر است: پس از روشن کردن، در تنظیمات › بلوتوث روی گوشی اندروید بزنید. حالت هواپیما بلوتوث را روشن نگه می‌دارد تا این اتصال برقرار بماند؛ اگر اتصال تا ۹۰ ثانیه برنگردد، خودش خاموش می‌شود. هات‌اسپات و اشتراک بلوتوث پس از آن دوباره روشن می‌شوند.";
 "On the Android phone, open Tether and tap Pair iPhone, then scan the code with the Camera or here (or paste it). Calls, messages, contacts and call history stay between your devices; there is no server." = "در اندروید REGISTER را باز کنید، «جفت کردن آیفون» را بزنید و کد را اسکن کنید.";
-"Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days." = "قبل از این تاریخ برنامه را در ابزاری که با آن نصبش کردید (SideStore، AltStore یا Sideloadly) رفرش کنید. امضای حساب رایگان اپل ۷ روز اعتبار دارد.";
+"Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days." = "قبل از این تاریخ برنامه را در ابزاری که با آن نصبش کردید (SIDESTORE، ALTSTORE یا SIDELOADLY) رفرش کنید. امضای حساب رایگان اپل ۷ روز اعتبار دارد.";
 "Move here" = "انتقال به اینجا";
 "On %@" = "روی %@";
 "another device" = "دستگاهی دیگر";
@@ -217,7 +217,7 @@
 "%@ · through your Android phone." = "‏%@ · از طریق گوشی اندرویدی شما.";
 "The Android phone is not connected. Keep it nearby and open the Link tab, then call from the Keypad." = "گوشی اندروید وصل نیست. آن را نزدیک نگه دارید و بخش «پیوند» را باز کنید.";
 "Show in Keypad" = "نمایش در صفحه‌کلید";
-"Show calls in the Phone app" = "نمایش تماس‌ها در برنامه Phone";
+"Show calls in the Phone app" = "نمایش تماس‌ها در برنامه PHONE";
 "Numbers in other apps" = "شماره‌ها در برنامه‌های دیگر";
 "Calls made here also appear in the Phone app's Recents; tapping one calls back through the Android phone. To call numbers you tap in other apps, choose this app in Settings › Apps › Default Apps › Calling (needs a paid Apple developer account), or use the \"Call with\" shortcut in the Shortcuts app." = "تماس‌های این برنامه در «اخیر» برنامهٔ تلفن آیفون هم دیده می‌شوند.";
 
