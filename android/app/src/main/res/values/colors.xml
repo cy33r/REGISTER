@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dark first: these are the colors in both day and night mode. -->
+<!-- Light mode (the phone's day theme); values-night holds the dark ones. iPhone-like system colors. -->
 <resources>
-    <color name="accent">#2FD3BE</color>
-    <color name="background">#0B0F10</color>
-    <color name="surface">#161C1D</color>
-    <color name="text">#ECF2F1</color>
-    <color name="muted">#8E9A98</color>
-    <color name="ok">#4CD787</color>
-    <color name="warn">#F0B03F</color>
-    <color name="bad">#FF5F57</color>
+    <color name="accent">#007AFF</color>
+    <color name="on_accent">#FFFFFF</color>
+    <color name="background">#F2F2F7</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text">#1C1C1E</color>
+    <color name="muted">#6C6C70</color>
+    <color name="ok">#248A3D</color>
+    <color name="warn">#C93400</color>
+    <color name="bad">#D70015</color>
+    <color name="call_green">#34C759</color>
+    <color name="call_red">#FF3B30</color>
     <color name="icon_bg">#0E1314</color>
-    <bool name="light_bars">false</bool>
+    <bool name="light_bars">true</bool>
 </resources>

@@ -205,6 +205,11 @@ final class CallAudio: @unchecked Sendable {
     /// Our ringback should sound now (dialing, and nothing audible from the far end yet).
     var ringbackAudible: Bool { flags { _ringback && !heardRemote } }
 
+    /// REGISTER: when this app last set the session's category itself. A route change with reason .categoryChange soon
+    /// after it is ours and may drop the speaker override; one at another time is iOS following the user's own choice
+    /// (the call screen's speaker button), which must not be undone.
+    nonisolated(unsafe) static var categorySetAt: Date = .distantPast
+
     static func configureSession() {
         let s = AVAudioSession.sharedInstance()
         // Hands-free (HFP) Bluetooth and car kits for calls; A2DP has no microphone. No .defaultToSpeaker: the
@@ -215,6 +220,7 @@ final class CallAudio: @unchecked Sendable {
         #else
         let handsFree: AVAudioSession.CategoryOptions = .allowBluetooth
         #endif
+        categorySetAt = Date()
         do { try s.setCategory(.playAndRecord, mode: .voiceChat, options: [handsFree]) }
         catch { NSLog("[audio] category: %@", "\(error)") }
         try? s.setPreferredSampleRate(16000)

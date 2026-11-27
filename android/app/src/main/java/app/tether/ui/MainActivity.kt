@@ -42,9 +42,13 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 
+private const val RELEASES_URL = "https://github.com/cy33r/REGISTER/releases"
+private val FA_DIGITS = Regex("(?<![A-Za-z0-9.:/\\-])[0-9]+(?![0-9A-Za-z:/\\-]|\\.[0-9A-Za-z])")
+
 class MainActivity : Activity() {
     private lateinit var app: TetherApp
     private lateinit var root: LinearLayout
+    private var advanced = false
     private val main = Handler(Looper.getMainLooper())
     private var qrUntil = 0L
     private var qrBitmap: Bitmap? = null
@@ -97,9 +101,11 @@ class MainActivity : Activity() {
     private fun render() {
         root.removeAllViews()
         root.addView(TextView(this).apply {
-            text = getString(R.string.app_name); textSize = 28f; setTypeface(typeface, Typeface.BOLD); setTextColor(color(R.color.text))
-            setPadding(dp(4), 0, 0, dp(16))
+            text = getString(R.string.app_name); textSize = 26f; setTypeface(typeface, Typeface.BOLD); setTextColor(color(R.color.text))
+            textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+            setPadding(dp(4), 0, dp(4), 0)
         })
+        root.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.muted, 13f).apply { setPadding(dp(4), 0, dp(4), dp(14)) })
 
         // Link
         val link = card(getString(R.string.section_link))
@@ -111,15 +117,15 @@ class MainActivity : Activity() {
             !app.keys.isPaired -> getString(R.string.state_unpaired) to R.color.warn
             else -> getString(R.string.state_waiting) to R.color.muted
         }
-        link.addView(label(state, stateColor, 18f))
+        link.addView(label(state, stateColor, 16f).apply { setTypeface(typeface, Typeface.BOLD) })
         // Paired devices: connected ones are marked; each can be removed on its own.
         val live = app.hub.targets()
         for (cl in app.keys.centrals()) {
             val on = live.any { it.peerKey.contentEquals(cl.key) }
-            val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, 0) }
             r.addView(label((if (on) "● " else "○ ") + cl.name + (if (on) " · " + getString(R.string.state_connected) else ""),
-                if (on) R.color.ok else R.color.muted).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
-            r.addView(button(getString(R.string.unpair), secondary = true) {
+                if (on) R.color.ok else R.color.muted, 14f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+            r.addView(smallButton(getString(R.string.unpair)) {
                 AlertDialog.Builder(this).setMessage(getString(R.string.unpair_confirm_named, cl.name))
                     .setPositiveButton(R.string.unpair) { _, _ ->
                         app.keys.removeCentral(cl.key)
@@ -137,9 +143,9 @@ class MainActivity : Activity() {
                 setImageBitmap(qrBitmap); adjustViewBounds = true
                 layoutParams = LinearLayout.LayoutParams(dp(260), dp(260)).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin = dp(8) }
             })
-            link.addView(label(getString(R.string.pair_expires, remaining), R.color.muted).apply { gravity = Gravity.CENTER })
-            // Cellular 1.1 scans only the tether1: form; the same code (same token) in that form.
-            link.addView(button(getString(if (qrLegacy) R.string.pair_new_code else R.string.pair_old_app), secondary = true) {
+            link.addView(label(getString(R.string.pair_expires, remaining.toInt()), R.color.muted, 13f).apply { textAlignment = View.TEXT_ALIGNMENT_CENTER })
+            // An iPhone app 1.1 scans only the tether1: form; the same code (same token) in that form. Advanced only.
+            if (advanced) link.addView(button(getString(if (qrLegacy) R.string.pair_new_code else R.string.pair_old_app), secondary = true, full = true) {
                 qrLegacy = !qrLegacy; drawQr(app.keys.openPairingCurrent() ?: return@button); render()
             })
         } else if (qrUntil > 0) {
@@ -147,9 +153,7 @@ class MainActivity : Activity() {
             qrBitmap = null
             qrLegacy = false
         }
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        row.addView(button(getString(R.string.pair_iphone)) { showQr() })
-        link.addView(row)
+        if (qrUntil == 0L) link.addView(button(getString(R.string.pair_iphone), full = true) { showQr() })
 
         // Setup
         val setup = card(getString(R.string.section_setup))
@@ -177,14 +181,6 @@ class MainActivity : Activity() {
             runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
         })
 
-        // Legacy TCP adb: opt-in, for Android 10 (no Wireless debugging) or a phone without a trusted Wi-Fi network.
-        val tcpOn = app.prefs.getBoolean(Adb.PREF_LEGACY, false)
-        val tcpPort = app.prefs.getInt(Adb.PREF_LEGACY_PORT, ConnectOrder.DEFAULT_LEGACY_PORT)
-        setup.addView(step(getString(R.string.step_adb_tcp), tcpOn && Adb.hasSecureSettings(this), getString(R.string.action_enable),
-            if (tcpOn) getString(R.string.adb_tcp_on, tcpPort) else getString(R.string.adb_tcp_off)) { enableTcpAdb(tcpPort) })
-        if (tcpOn) setup.addView(button(getString(R.string.action_turn_off), secondary = true) {
-            app.prefs.edit().putBoolean(Adb.PREF_LEGACY, false).apply(); Adb.reset(); render()
-        })
         if (!app.keys.isPaired && qrUntil == 0L) setup.addView(label(getString(R.string.help_pair_next), R.color.accent, 14f))
 
         // Audio
@@ -198,8 +194,7 @@ class MainActivity : Activity() {
         val h = app.hub.audio.helperStatus()
         val running = h.optString("state") == "running"
         audio.addView(step(getString(R.string.step_helper), running, getString(R.string.action_start),
-            if (running) getString(R.string.helper_running, h.optString("method", "auto")) +
-                (h.optString("capture").takeIf { it.isNotEmpty() }?.let { " · " + getString(R.string.helper_capture, it) } ?: "") else getString(R.string.helper_stopped)) {
+            if (running) getString(R.string.helper_on) else getString(R.string.helper_stopped)) {
             Thread { app.hub.helper.ensureRunning(); app.hub.refresh() }.start()
         })
         // The phone's own microphone during bridged calls (issue #2): by default a redirect audio mode takes it out of the
@@ -211,7 +206,8 @@ class MainActivity : Activity() {
             for ((choice, text) in listOf(MicPath.Setting.AUTO to R.string.mic_choice_auto, MicPath.Setting.MUTE to R.string.mic_choice_mute,
                     MicPath.Setting.OPEN to R.string.mic_choice_open)) {
                 group.addView(RadioButton(this).apply {
-                    id = View.generateViewId(); this.text = getString(text); textSize = 15f; setTextColor(color(R.color.text))
+                    id = View.generateViewId(); this.text = fa(getString(text)); textSize = 15f; setTextColor(color(R.color.text))
+                    textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
                     isChecked = choice == mic
                     // A click sets it; on the one already chosen it also forgets what the redirect modes did here, so they are tried anew.
                     setOnClickListener { Thread { app.hub.audio.setMic(choice); app.hub.pushStatus() }.start() }
@@ -235,14 +231,14 @@ class MainActivity : Activity() {
                 mic == MicPath.Setting.MUTE -> R.string.mic_mute_on
                 else -> R.string.mic_open_note
             }), if (blocked || unsupported || (autoFailed && !vendor)) R.color.warn else R.color.muted, 13f))
-            h.optString("micPath").takeIf { it.isNotEmpty() }?.let { p ->
+            if (advanced) h.optString("micPath").takeIf { it.isNotEmpty() }?.let { p ->
                 audio.addView(label(when (p) {
                     "off" -> getString(R.string.mic_now_off, app.hub.helper.lastMic?.optString("mode") ?: "")
                     "muted" -> getString(R.string.mic_now_muted)
                     else -> getString(R.string.mic_now_open)
                 }, R.color.muted, 13f))
             }
-            h.optString("uplink").takeIf { it.isNotEmpty() }?.let { u ->
+            if (advanced) h.optString("uplink").takeIf { it.isNotEmpty() }?.let { u ->
                 audio.addView(label(getString(R.string.uplink_title) + ": " + getString(when (u) {
                     "ok" -> R.string.uplink_ok
                     "checking" -> R.string.uplink_checking
@@ -252,23 +248,53 @@ class MainActivity : Activity() {
                 }), if (u == "muted-locally-fixed") R.color.warn else R.color.muted, 13f))
             }
         }
+
+        // Advanced: the technical options, hidden until asked for.
+        val adv = card(getString(R.string.section_advanced))
+        adv.addView(button(getString(if (advanced) R.string.advanced_hide else R.string.advanced_show), secondary = true, full = true) {
+            advanced = !advanced; render()
+        })
+        if (advanced) {
+        // Legacy TCP adb: opt-in, for Android 10 (no Wireless debugging) or a phone without a trusted Wi-Fi network.
+        val tcpOn = app.prefs.getBoolean(Adb.PREF_LEGACY, false)
+        val tcpPort = app.prefs.getInt(Adb.PREF_LEGACY_PORT, ConnectOrder.DEFAULT_LEGACY_PORT)
+        adv.addView(step(getString(R.string.step_adb_tcp), tcpOn && Adb.hasSecureSettings(this), getString(R.string.action_enable),
+            if (tcpOn) getString(R.string.adb_tcp_on, tcpPort) else getString(R.string.adb_tcp_off)) { enableTcpAdb(tcpPort) })
+        if (tcpOn) adv.addView(button(getString(R.string.action_turn_off), secondary = true) {
+            app.prefs.edit().putBoolean(Adb.PREF_LEGACY, false).apply(); Adb.reset(); render()
+        })
+        if (running) adv.addView(label(getString(R.string.helper_running, h.optString("method", "auto")) +
+            (h.optString("capture").takeIf { it.isNotEmpty() }?.let { " · " + getString(R.string.helper_capture, it) } ?: ""), R.color.muted, 13f))
         app.hub.lastSelftest?.let { st ->
             val methods = st.optJSONArray("methods")
             val txt = (0 until (methods?.length() ?: 0)).joinToString("\n") {
                 val m = methods!!.getJSONObject(it); "${if (m.optBoolean("ok")) "✓" else "✗"} ${m.optString("name")}  ${m.optString("note")}"
             }
-            audio.addView(label(getString(R.string.selftest_result, st.optString("chosen", "–")) + "\n" + txt, R.color.muted, 13f))
+            adv.addView(label(getString(R.string.selftest_result, st.optString("chosen", "–")) + "\n" + txt, R.color.muted, 12f).apply {
+                textDirection = View.TEXT_DIRECTION_LTR; typeface = Typeface.MONOSPACE })
         }
-        audio.addView(button(getString(R.string.action_selftest), secondary = true) {
-            Thread { app.hub.selftest() }.start()
-        })
-        audio.addView(button(getString(R.string.link_log), secondary = true) { showLinkLog() })
+        adv.addView(button(getString(R.string.action_selftest), secondary = true, full = true) { Thread { app.hub.selftest() }.start() })
+        adv.addView(button(getString(R.string.link_log), secondary = true, full = true) { showLinkLog() })
+        }
 
         // Help: one file with what is needed to find any problem (docs/TROUBLESHOOTING.md, "What to include in a report").
         val help = card(getString(R.string.section_help))
         help.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
-        help.addView(button(getString(R.string.report_title)) { ReportUi.send(this) { PhoneReport.build(app) } })
+        help.addView(button(getString(R.string.report_title), full = true) { ReportUi.send(this) { PhoneReport.build(app) } })
+
+        // About: the version, and the releases page for updates (opened in the browser; the app sends nothing).
+        val about = card(getString(R.string.section_about))
+        about.addView(label(getString(R.string.about_text), R.color.muted, 13f))
+        about.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.text, 15f).apply { setTypeface(typeface, Typeface.BOLD) })
+        about.addView(button(getString(R.string.action_check_update), secondary = true, full = true) {
+            runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }
+        })
     }
+
+    /** A Latin run (a version, a name) kept left to right inside a Persian line. */
+    private fun ltr(t: String) = "\u2066$t\u2069"
+
+    private fun appVersion(): String = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
 
     /**
      * The link log (the same lines as `tools/dbg.sh linklog`: link, call-audio and mic events, no message text, no
@@ -289,7 +315,7 @@ class MainActivity : Activity() {
         AlertDialog.Builder(this).setTitle(R.string.link_log).setView(ScrollView(this).apply { addView(view) })
             .setPositiveButton(R.string.action_share) { _, _ ->
                 val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                    .putExtra(Intent.EXTRA_SUBJECT, "Tether link log").putExtra(Intent.EXTRA_TEXT, text)
+                    .putExtra(Intent.EXTRA_SUBJECT, "REGISTER link log").putExtra(Intent.EXTRA_TEXT, text)
                 runCatching { startActivity(Intent.createChooser(send, getString(R.string.link_log))) }
             }
             .setNeutralButton(R.string.action_copy) { _, _ ->
@@ -358,33 +384,57 @@ class MainActivity : Activity() {
         return c
     }
 
+    /** Every text right to left (Persian), even a line that starts with a Latin word, with Persian digits. */
     private fun label(t: String, colorId: Int, size: Float = 15f) = TextView(this).apply {
-        text = t; textSize = size; setTextColor(color(colorId)); setPadding(0, dp(4), 0, dp(4))
-        textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+        text = fa(t); textSize = size; setTextColor(color(colorId)); setPadding(0, dp(3), 0, dp(3))
+        textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+        setLineSpacing(0f, 1.15f)
+        // Longer notes justified, so every line of a paragraph is the same width.
+        if (size <= 14f) justificationMode = android.text.Layout.JUSTIFICATION_MODE_INTER_WORD
+        layoutParams = LinearLayout.LayoutParams(-1, -2)
     }
 
-    private fun button(t: String, secondary: Boolean = false, onClick: () -> Unit) = Button(this).apply {
-        text = t; isAllCaps = false
-        setTextColor(if (secondary) color(R.color.accent) else color(R.color.background))
+    /** A pill button; [full]: as wide as its card. Laid out under its text, never beside it. */
+    private fun button(t: String, secondary: Boolean = false, full: Boolean = false, onClick: () -> Unit) = Button(this).apply {
+        text = fa(t); isAllCaps = false; textSize = 15f
+        setTextColor(if (secondary) color(R.color.accent) else color(R.color.on_accent))
         background = GradientDrawable().apply {
-            cornerRadius = dp(20).toFloat()
+            cornerRadius = dp(22).toFloat()
             if (secondary) setStroke(dp(1), color(R.color.accent)) else setColor(color(R.color.accent))
         }
-        layoutParams = LinearLayout.LayoutParams(-2, dp(42)).apply { topMargin = dp(8); marginEnd = dp(8) }
-        setPadding(dp(18), 0, dp(18), 0)
+        stateListAnimator = null
+        layoutParams = LinearLayout.LayoutParams(if (full) -1 else -2, dp(44)).apply { topMargin = dp(10) }
+        setPadding(dp(20), 0, dp(20), 0)
         setOnClickListener { onClick() }
     }
 
+    /** A small text button for a row (unpair). */
+    private fun smallButton(t: String, onClick: () -> Unit) = Button(this).apply {
+        text = fa(t); isAllCaps = false; textSize = 13f; setTextColor(color(R.color.bad))
+        background = null; stateListAnimator = null; minWidth = 0; minHeight = 0
+        setPadding(dp(10), dp(6), dp(10), dp(6))
+        layoutParams = LinearLayout.LayoutParams(-2, -2)
+        setOnClickListener { onClick() }
+    }
+
+    /** A setup step: title and status on one line, what to do under it, and its button under that. */
     private fun step(title: String, done: Boolean, action: String, detail: String? = null, help: String? = null,
                      onClick: () -> Unit): View {
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, dp(6)) }
-        val texts = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(0, -2, 1f) }
-        texts.addView(label(title, R.color.text, 16f))
-        texts.addView(label(detail ?: getString(if (done) R.string.done else R.string.missing), if (done) R.color.ok else R.color.warn, 13f))
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(10), 0, dp(10)) }
+        val head = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        head.addView(label(title, R.color.text, 16f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+        head.addView(label(detail ?: getString(if (done) R.string.done else R.string.missing), if (done) R.color.ok else R.color.warn, 13f).apply {
+            layoutParams = LinearLayout.LayoutParams(-2, -2); textAlignment = View.TEXT_ALIGNMENT_VIEW_END })
+        box.addView(head)
         // What to do, in plain words, until the step is done.
-        if (!done && help != null) texts.addView(label(help, R.color.muted, 13f))
-        row.addView(texts)
-        if (!done) row.addView(button(action) { onClick() })
-        return row
+        if (!done && help != null) box.addView(label(help, R.color.muted, 13f))
+        if (!done) box.addView(button(action) { onClick() })
+        return box
     }
+
+    /**
+     * Persian digits for what the user reads. A number touching a Latin letter or a dot, colon, slash or dash
+     * (A73, 5G, 127.0.0.1, beta.2, SIM 2's carrier codes) is left as it is.
+     */
+    private fun fa(t: String): String = FA_DIGITS.replace(t) { m -> m.value.map { '۰' + (it - '0') }.joinToString("") }
 }

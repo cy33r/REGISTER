@@ -1,7 +1,8 @@
 # Builds and publishes a GitHub Release when a version tag (v1.2.3, v1.2.3-rc.1) is pushed: Android APKs of the A54
 # app and the Android client, an unsigned iPhone app (.ipa) for sideloading tools that re-sign, SHA256SUMS and build
 # provenance attestations, and altstore.json (an AltStore / SideStore source for the IPA, tools/altstore-source.py).
-# Tags are made by tools/release.sh.
+# REGISTER: "Run workflow" on main needs no tag: the version comes from the VERSION file and the tag v<VERSION> is
+# created with the release.
 name: Release
 on:
   push:
@@ -9,17 +10,18 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to (re)build, e.g. v1.2.0"
-        required: true
+        description: "Leave empty: the version comes from the VERSION file"
+        required: false
+        default: ""
 permissions:
   contents: read
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  group: release
   cancel-in-progress: false
 env:
   # Maven Central answers shared runners with 429 Too Many Requests at busy times; Google's mirror of it does not.
   TETHER_MAVEN_CENTRAL_MIRROR: https://maven-central.storage-download.googleapis.com/maven2/
-  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  TAG: ${{ github.event.inputs.tag || (github.event_name == 'push' && github.ref_name) || '' }}
 
 jobs:
   check:
@@ -28,6 +30,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
       prerelease: ${{ steps.v.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v7
@@ -36,6 +39,7 @@ jobs:
       - id: v
         run: |
           version=$(tr -d '[:space:]' < VERSION)
+          [ -n "$TAG" ] || TAG="v$version"
           if [ "v$version" != "$(echo "$TAG" | tr "[:upper:]" "[:lower:]")" ]; then
             echo "::error::tag $TAG does not match VERSION ($version)"; exit 1
           fi
@@ -50,6 +54,7 @@ jobs:
             { echo "::error::CHANGELOG.md has no section '## $version'"; exit 1; }
           case $version in *-*) pre=true ;; *) pre=false ;; esac
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "prerelease=$pre" >> "$GITHUB_OUTPUT"
 
   android:
@@ -154,6 +159,8 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -190,8 +197,7 @@ jobs:
           {
             if ls dist/*-debug-signed.apk >/dev/null 2>&1; then
               echo "> **The APKs of this release are signed with a throw-away debug key**, not the project's release"
-              echo "> key (the repository has no signing secrets). Use them for testing; a later release-signed APK needs"
-              echo "> an uninstall first."
+              echo "> key (the repository has no signing secrets): each update needs an uninstall first."
               echo
             fi
             echo "## What changed"
@@ -226,5 +232,5 @@ jobs:
             gh release upload "$TAG" dist/* --clobber
             gh release edit "$TAG" --notes-file notes.md
           else
-            gh release create "$TAG" dist/* --title "REGISTER $VERSION" --notes-file notes.md --verify-tag $flags
+            gh release create "$TAG" dist/* --title "REGISTER $VERSION" --notes-file notes.md --target "$GITHUB_SHA" $flags
           fi

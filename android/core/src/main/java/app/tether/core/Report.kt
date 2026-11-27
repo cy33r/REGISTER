@@ -112,7 +112,7 @@ class ReportScrubber(names: Collection<String> = emptyList(), keep: Collection<S
  * A plain-text problem report (the same format in the Android phone app, the Android client and the iPhone app):
  *
  * ```
- * === Tether problem report ===
+ * === REGISTER problem report ===
  * App: Tether 1.2.2 (1020299) · Android phone app
  * Created: 2026-11-25 16:20:13 +03:30
  * Privacy: …
@@ -190,7 +190,7 @@ class ProblemReport(
     }
 
     companion object {
-        const val TITLE = "=== Tether problem report ==="
+        const val TITLE = "=== REGISTER problem report ==="
         const val PRIVACY = "Privacy: phone numbers, names, message text, e-mail, addresses and keys are removed. Check before posting."
         /** About 1 MB: small enough for an issue attachment and a chat app. */
         const val MAX_BYTES = 1_000_000

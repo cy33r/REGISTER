@@ -55,7 +55,7 @@ final class AppEvents: @unchecked Sendable {
         let info = Bundle.main.infoDictionary
         let v = info?["CFBundleShortVersionString"] as? String ?? "?"
         let b = info?["CFBundleVersion"] as? String ?? "?"
-        return "Cellular \(v) (\(b)) · iPhone app"
+        return "REGISTER \(v) (\(b)) · iPhone app"
     }
 
     // MARK: Device

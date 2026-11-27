@@ -43,7 +43,7 @@
 "Not set" = "تنظیم نشده";
 "Off" = "خاموش";
 "On" = "روشن";
-"On the Android phone, open Tether and tap Pair iPhone, then scan the code. Calls, messages, contacts and call history stay between the two phones; there is no server." = "روی گوشی اندروید REGISTER را باز کنید و «جفت کردن آیفون» را بزنید، سپس کد را اسکن کنید. تماس‌ها، پیام‌ها، مخاطبین و سابقه تماس فقط بین دو گوشی می‌ماند؛ هیچ سروری در کار نیست.";
+"On the Android phone, open Tether and tap Pair iPhone, then scan the code. Calls, messages, contacts and call history stay between the two phones; there is no server." = "در اندروید REGISTER را باز کنید، «جفت کردن آیفون» را بزنید و کد را اسکن کنید.";
 "Other" = "سایر";
 "Out of reach" = "خارج از دسترس";
 "Out of reach, will reconnect automatically" = "خارج از دسترس، خودکار دوباره وصل می‌شود";
@@ -100,7 +100,7 @@
 "Touch to return to call" = "برای بازگشت به تماس لمس کنید";
 "Message too long" = "پیام خیلی طولانی است";
 "Will send when the Android phone is back in reach" = "وقتی گوشی اندروید در دسترس باشد ارسال می‌شود";
-"Tether keeps the link in the background and when the screen is locked. Swiping Tether away in the app switcher stops it until you open it again: iOS does not relaunch a force-quit app for Bluetooth." = "REGISTER در پس‌زمینه و هنگام قفل بودن صفحه هم وصل می‌ماند. اگر REGISTER را در فهرست برنامه‌ها با کشیدن ببندید، تا باز کردن دوباره متوقف می‌شود: iOS برنامه‌ای را که به‌اجبار بسته شده برای بلوتوث دوباره اجرا نمی‌کند.";
+"Tether keeps the link in the background and when the screen is locked. Swiping Tether away in the app switcher stops it until you open it again: iOS does not relaunch a force-quit app for Bluetooth." = "‏REGISTER در پس‌زمینه و با صفحهٔ قفل هم وصل می‌ماند. اگر آن را از لیست برنامه‌ها ببندید، تا باز کردن دوباره قطع می‌شود.";
 "Text Message · SMS" = "پیامک";
 "Not Delivered" = "تحویل نشد";
 "Sending…" = "در حال ارسال…";
@@ -114,7 +114,7 @@
 "The Android phone did not answer." = "گوشی اندرویدی پاسخی نداد.";
 "Renewal" = "تمدید";
 "App expires" = "انقضای برنامه";
-"in %lld days" = "%lld روز دیگر";
+"in %lld days" = "‏%lld روز دیگر";
 "Edit" = "ویرایش";
 "Edit contact" = "ویرایش مخاطب";
 "Add phone" = "افزودن شماره";
@@ -148,8 +148,8 @@
 "Kept on the Android phone and shared by all your devices." = "روی گوشی اندروید نگه داشته می‌شود و در همهٔ دستگاه‌هایتان یکسان است.";
 "No Blocked Contacts" = "مخاطب مسدودی نیست";
 "This is the Android phone's own block list: it refuses these calls and messages itself, whichever device you use." = "این فهرست مسدودهای خود گوشی اندروید است: گوشی این تماس‌ها و پیام‌ها را خودش رد می‌کند، با هر دستگاهی که کار کنید.";
-"Tether rejects these calls and does not forward these messages to your devices." = "REGISTER این تماس‌ها را رد می‌کند و این پیام‌ها را به دستگاه‌هایتان نمی‌فرستد.";
-"The Android phone is not connected." = "گوشی اندروید وصل نیست.";
+"Tether rejects these calls and does not forward these messages to your devices." = "‏REGISTER این تماس‌ها را رد می‌کند و این پیام‌ها را به دستگاه‌هایتان نمی‌فرستد.";
+"The Android phone is not connected." = "گوشی اندروید وصل نیست. آن را نزدیک نگه دارید و بخش «پیوند» را باز کنید.";
 "Not deleted" = "حذف نشد";
 
 /* VPN and Share VPN */
@@ -165,10 +165,10 @@
 /* Round 5 */
 "Link log" = "گزارش اتصال";
 "No events yet." = "هنوز رویدادی نیست.";
-"VPN on the Android phone" = "VPN روی گوشی اندروید";
+"VPN on the Android phone" = "‏VPN روی گوشی اندروید";
 "Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN." = "اشتراک اینترنت با بلوتوث خودبه‌خود از VPN استفاده نمی‌کند: آیفون برای آن تنظیم پراکسی ندارد. برای VPN از هات‌اسپات استفاده کنید.";
 "Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server %@:%@ there and turn it on." = "فقط یک برنامهٔ پراکسی روی این آیفون (مثلاً V2Box) می‌تواند از راه بلوتوث از آن استفاده کند: در آن یک سرور SOCKS5 با نشانی %1$@:%2$@ بسازید و روشنش کنید.";
-"Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app." = "VPN را در برنامهٔ خودش روی گوشی اندروید روشن کنید. هات‌اسپات و اشتراک بلوتوث گوشی از آن عبور نمی‌کنند (اندروید ترافیک اشتراکی را مستقیم می‌فرستد)، برای همین «اشتراک VPN» یک پراکسی روی گوشی اجرا می‌کند که ترافیکش از VPN می‌گذرد. این آیفون از راه هات‌اسپات (یک بار تنظیم پراکسی) و از راه بلوتوث فقط با یک برنامهٔ پراکسی می‌تواند از آن استفاده کند.";
+"Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app." = "‏VPN را در برنامهٔ خودش روی گوشی اندروید روشن کنید. هات‌اسپات و اشتراک بلوتوث گوشی از آن عبور نمی‌کنند (اندروید ترافیک اشتراکی را مستقیم می‌فرستد)، برای همین «اشتراک VPN» یک پراکسی روی گوشی اجرا می‌کند که ترافیکش از VPN می‌گذرد. این آیفون از راه هات‌اسپات (یک بار تنظیم پراکسی) و از راه بلوتوث فقط با یک برنامهٔ پراکسی می‌تواند از آن استفاده کند.";
 "No service" = "بدون آنتن";
 "Favourites" = "علاقه‌مندی‌ها";
 "All Contacts" = "همهٔ مخاطبان";
@@ -179,7 +179,7 @@
 "Airplane mode" = "حالت هواپیما";
 "Network · %@" = "شبکه · %@";
 "Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it." = "برای استفاده از اینترنت گوشی اندروید، هات‌اسپات را روشن کنید و در تنظیمات › Wi-Fi به آن وصل شوید. اشتراک بلوتوث کندتر است: پس از روشن کردن، در تنظیمات › بلوتوث روی گوشی اندروید بزنید. حالت هواپیما بلوتوث را روشن نگه می‌دارد تا این اتصال برقرار بماند؛ اگر اتصال تا ۹۰ ثانیه برنگردد، خودش خاموش می‌شود. هات‌اسپات و اشتراک بلوتوث پس از آن دوباره روشن می‌شوند.";
-"On the Android phone, open Tether and tap Pair iPhone, then scan the code with the Camera or here (or paste it). Calls, messages, contacts and call history stay between your devices; there is no server." = "روی گوشی اندروید، REGISTER را باز کنید و «جفت کردن آیفون» را بزنید، سپس کد را با دوربین یا همین‌جا اسکن کنید (یا بچسبانید). تماس‌ها، پیام‌ها، مخاطبان و تاریخچهٔ تماس فقط بین دستگاه‌های شما می‌ماند؛ سروری در کار نیست.";
+"On the Android phone, open Tether and tap Pair iPhone, then scan the code with the Camera or here (or paste it). Calls, messages, contacts and call history stay between your devices; there is no server." = "در اندروید REGISTER را باز کنید، «جفت کردن آیفون» را بزنید و کد را اسکن کنید.";
 "Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days." = "قبل از این تاریخ برنامه را در ابزاری که با آن نصبش کردید (SideStore، AltStore یا Sideloadly) رفرش کنید. امضای حساب رایگان اپل ۷ روز اعتبار دارد.";
 "Move here" = "انتقال به اینجا";
 "On %@" = "روی %@";
@@ -214,12 +214,12 @@
 /* Numbers from other apps (tel: links, Shortcuts, the Phone app's Recents) */
 "Call %@?" = "با %@ تماس گرفته شود؟";
 "The call goes through your Android phone." = "تماس از طریق گوشی اندرویدی شما برقرار می‌شود.";
-"%@ · through your Android phone." = "%@ · از طریق گوشی اندرویدی شما.";
-"The Android phone is not connected. Keep it nearby and open the Link tab, then call from the Keypad." = "گوشی اندرویدی وصل نیست. آن را نزدیک نگه دارید و زبانه «اتصال» را باز کنید، سپس از صفحه‌کلید تماس بگیرید.";
+"%@ · through your Android phone." = "‏%@ · از طریق گوشی اندرویدی شما.";
+"The Android phone is not connected. Keep it nearby and open the Link tab, then call from the Keypad." = "گوشی اندروید وصل نیست. آن را نزدیک نگه دارید و بخش «پیوند» را باز کنید.";
 "Show in Keypad" = "نمایش در صفحه‌کلید";
 "Show calls in the Phone app" = "نمایش تماس‌ها در برنامه Phone";
 "Numbers in other apps" = "شماره‌ها در برنامه‌های دیگر";
-"Calls made here also appear in the Phone app's Recents; tapping one calls back through the Android phone. To call numbers you tap in other apps, choose this app in Settings › Apps › Default Apps › Calling (needs a paid Apple developer account), or use the \"Call with\" shortcut in the Shortcuts app." = "تماس‌های این برنامه در «اخیر» برنامه Phone هم دیده می‌شوند و با لمس هرکدام، از طریق گوشی اندرویدی دوباره تماس گرفته می‌شود. برای تماس با شماره‌هایی که در برنامه‌های دیگر لمس می‌کنید، این برنامه را در Settings › Apps › Default Apps › Calling انتخاب کنید (به حساب پولی توسعه‌دهنده اپل نیاز دارد)، یا از میان‌بر «Call with» در برنامه Shortcuts استفاده کنید.";
+"Calls made here also appear in the Phone app's Recents; tapping one calls back through the Android phone. To call numbers you tap in other apps, choose this app in Settings › Apps › Default Apps › Calling (needs a paid Apple developer account), or use the \"Call with\" shortcut in the Shortcuts app." = "تماس‌های این برنامه در «اخیر» برنامهٔ تلفن آیفون هم دیده می‌شوند.";
 
 /* iOS 16 stand-ins */
 "No Results for “%@”" = "نتیجه‌ای برای «%@» نیست";
@@ -233,10 +233,10 @@
 "Was muted by the phone; fixed" = "گوشی آن را قطع کرده بود؛ درست شد";
 "Not muted by the phone" = "گوشی آن را قطع نمی‌کند";
 "Not checked" = "بررسی نشده";
-"Call audio is not available on this Android phone: it needs Android 11 or later. Calls are still answered, placed and ended here, but you hear and speak on the Android phone." = "صدای تماس روی این گوشی اندروید در دسترس نیست: به اندروید ۱۱ یا جدیدتر نیاز دارد. تماس‌ها همچنان از اینجا پاسخ داده، گرفته و قطع می‌شوند، اما صدا را روی گوشی اندروید می‌شنوید و همان‌جا صحبت می‌کنید.";
-"This Android phone's software gives Tether no call audio (the call sounds like silence to it). Calls are still answered, placed and ended here, but you hear and speak on the Android phone. A system update, or a self-test during a call that hears the call, turns call audio back on. If calls on the phone itself have no sound either, restart the phone once." = "نرم‌افزار این گوشی اندروید صدای تماس را به REGISTER نمی‌دهد (صدای تماس برایش سکوت است). تماس‌ها همچنان از اینجا پاسخ داده، گرفته و قطع می‌شوند، اما صدا را روی خود گوشی اندروید می‌شنوید و همان‌جا صحبت می‌کنید. با به‌روزرسانی سیستم، یا آزمون صدایی که وسط تماس صدای تماس را بشنود، صدای تماس دوباره فعال می‌شود. اگر تماس‌های خود گوشی هم صدا ندارند، گوشی را یک بار ری‌استارت کنید.";
-"Tether may not use this iPhone's microphone, so the other side hears nothing. Allow it in Settings › Privacy & Security › Microphone." = "REGISTER اجازهٔ استفاده از میکروفون این آیفون را ندارد، برای همین طرف مقابل چیزی نمی‌شنود. در تنظیمات › حریم خصوصی و امنیت › میکروفون اجازه دهید.";
-"Off is safest: on some Android phones muting their microphone also mutes your voice for the other side. When it is on, Tether checks during each call and turns the mute off if your voice does not get through." = "خاموش امن‌تر است: در بعضی گوشی‌های اندروید بی‌صدا کردن میکروفون، صدای شما را هم برای طرف مقابل قطع می‌کند. وقتی روشن است، REGISTER در هر تماس بررسی می‌کند و اگر صدای شما نرسد، بی‌صدا کردن را خاموش می‌کند.";
+"Call audio is not available on this Android phone: it needs Android 11 or later. Calls are still answered, placed and ended here, but you hear and speak on the Android phone." = "صدای تماس روی این اندروید در دسترس نیست (اندروید ۱۱ یا جدیدتر لازم است).";
+"This Android phone's software gives Tether no call audio (the call sounds like silence to it). Calls are still answered, placed and ended here, but you hear and speak on the Android phone. A system update, or a self-test during a call that hears the call, turns call audio back on. If calls on the phone itself have no sound either, restart the phone once." = "گوشی اندروید صدای تماس را به REGISTER نمی‌دهد؛ فعلاً صدا روی خود اندروید است. اگر تماس‌های عادی هم بی‌صدا شد، اندروید را یک بار ری‌استارت کنید.";
+"Tether may not use this iPhone's microphone, so the other side hears nothing. Allow it in Settings › Privacy & Security › Microphone." = "‏REGISTER اجازهٔ میکروفون ندارد و طرف مقابل صدای شما را نمی‌شنود. در تنظیمات › حریم خصوصی › میکروفون آن را روشن کنید.";
+"Off is safest: on some Android phones muting their microphone also mutes your voice for the other side. When it is on, Tether checks during each call and turns the mute off if your voice does not get through." = "خاموش امن‌تر است؛ در بعضی گوشی‌ها بی‌صدا کردن، صدای شما را هم قطع می‌کند.";
 
 /* Call audio: the Android phone's microphone (issue #2) */
 "Android phone's microphone" = "میکروفون گوشی اندروید";
@@ -246,23 +246,23 @@
 "Microphone out of the call" = "میکروفون بیرون از تماس";
 "Microphone muted" = "میکروفون بی‌صدا";
 "Microphone on" = "میکروفون روشن";
-"Muting works on some phones only: on others it also mutes your voice for the other side. Tether checks during each call and turns the mute off if your voice does not get through." = "بی‌صدا کردن فقط روی بعضی گوشی‌ها کار می‌کند: روی بقیه صدای شما را هم برای طرف مقابل قطع می‌کند. REGISTER در هر تماس بررسی می‌کند و اگر صدای شما نرسد، بی‌صدا کردن را خاموش می‌کند.";
-"The Android phone's microphone stays in the call: the other side may hear your voice twice, and the room around the phone." = "میکروفون گوشی اندروید در تماس می‌ماند: ممکن است طرف مقابل صدای شما را دو بار بشنود، همراه با صدای اطراف آن گوشی.";
-"Tether puts the call in Android's redirect audio mode: the Android phone's own microphone and earpiece leave the call, so the other side hears only this iPhone. Tether checks that both directions still work and keeps the microphone on where the phone does not allow it." = "REGISTER تماس را به حالت صوتی «هدایت تماس» اندروید می‌برد: میکروفون و بلندگوی مکالمهٔ گوشی اندروید از تماس بیرون می‌روند و طرف مقابل فقط صدای این آیفون را می‌شنود. REGISTER بررسی می‌کند که صدا در هر دو جهت برقرار بماند و جایی که گوشی اجازه ندهد، میکروفون را روشن نگه می‌دارد.";
+"Muting works on some phones only: on others it also mutes your voice for the other side. Tether checks during each call and turns the mute off if your voice does not get through." = "فقط روی بعضی گوشی‌ها کار می‌کند. REGISTER بررسی می‌کند صدای شما قطع نشود.";
+"The Android phone's microphone stays in the call: the other side may hear your voice twice, and the room around the phone." = "میکروفون اندروید روشن می‌ماند و ممکن است صدای اطراف هم شنیده شود.";
+"Tether puts the call in Android's redirect audio mode: the Android phone's own microphone and earpiece leave the call, so the other side hears only this iPhone. Tether checks that both directions still work and keeps the microphone on where the phone does not allow it." = "وقتی با آیفون حرف می‌زنید، میکروفون و گوشی اندروید خاموش می‌شوند و طرف مقابل فقط صدای آیفون را می‌شنود.";
 
 /* First run and pairing links */
 "Set up" = "راه‌اندازی";
 "Connect your Android phone" = "گوشی اندرویدی‌تان را وصل کنید";
 "Use your Android SIM for calls and texts on this device." = "با سیم‌کارت گوشی اندرویدی، از همین دستگاه تماس بگیرید و پیامک بفرستید.";
 "Set up Tether on Android" = "راه‌اندازی REGISTER در اندروید";
-"On the phone with the SIM, install Tether and complete its setup." = "REGISTER را روی گوشی سیم‌کارت‌دار نصب کنید و مراحل راه‌اندازی را انجام دهید.";
+"On the phone with the SIM, install Tether and complete its setup." = "‏REGISTER را روی گوشی سیم‌کارت‌دار نصب کنید و مراحل راه‌اندازی را انجام دهید.";
 "Show the pairing code" = "نمایش کد جفت‌سازی";
 "In Tether on Android, tap Pair iPhone. The QR code is available for five minutes." = "در REGISTERِ گوشی اندرویدی، «جفت کردن آیفون» را بزنید. کد QR تا پنج دقیقه معتبر است.";
 "Scan with this device" = "اسکن با همین دستگاه";
-"Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in REGISTER. You can also enter the code manually from the scanner." = "دو گوشی را نزدیک هم نگه دارید. کد را همین‌جا اسکن کنید، یا دوربین آیفون را روی آن بگیرید و Open in REGISTER را بزنید. در صفحهٔ اسکن می‌توانید کد را دستی هم وارد کنید.";
+"Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in REGISTER. You can also enter the code manually from the scanner." = "دو گوشی را نزدیک هم نگه دارید. کد را همین‌جا اسکن کنید، یا با دوربین آیفون اسکن کنید و دکمهٔ زرد REGISTER را بزنید.";
 "Turn on Bluetooth in Settings on this device before pairing." = "پیش از جفت‌سازی، بلوتوث را در تنظیمات این دستگاه روشن کنید.";
 "Scan Pairing Code" = "اسکن کد جفت‌سازی";
-"Calls and texts stay on your devices and travel over an encrypted Bluetooth link." = "تماس‌ها و پیامک‌ها در دستگاه‌های شما می‌مانند و از طریق بلوتوث رمزنگاری‌شده منتقل می‌شوند.";
+"Calls and texts stay on your devices and travel over an encrypted Bluetooth link." = "تماس‌ها و پیامک‌ها فقط بین دو گوشی خودتان و با بلوتوث رمزنگاری‌شده جابه‌جا می‌شوند.";
 "Pair with %@?" = "با %@ جفت شود؟";
 "the Android phone" = "گوشی اندروید";
 "This replaces the current pairing and removes the synced data from this iPhone." = "این کار جفت‌سازی فعلی را جایگزین می‌کند و داده‌های همگام‌شده را از این آیفون پاک می‌کند.";
@@ -271,9 +271,9 @@
 "Paste or type a pairing code you have as text (tether1:… or tether://pair?…). The Android phone shows it as a QR code: scanning is quicker." = "کد جفت‌سازی را که به صورت متن دارید بچسبانید یا تایپ کنید (tether1:… یا tether://pair?…). گوشی اندروید آن را به صورت کد QR نشان می‌دهد: اسکن سریع‌تر است.";
 
 /* This iPhone's microphone (issue #14) */
-"Microphone off for Tether" = "میکروفون برای REGISTER خاموش است";
+"Microphone off for Tether" = "میکروفون برای REGISTER خاموش است. در تنظیمات › حریم خصوصی › میکروفون روشنش کنید.";
 "The other side cannot hear you. Allow the microphone in Settings › Privacy & Security › Microphone." = "طرف مقابل صدای شما را نمی‌شنود. در تنظیمات › حریم خصوصی و امنیت › میکروفون اجازه دهید.";
-"Microphone off for Tether: the other side cannot hear you. Allow it in Settings › Privacy & Security › Microphone." = "میکروفون برای REGISTER خاموش است: طرف مقابل صدای شما را نمی‌شنود. در تنظیمات › حریم خصوصی و امنیت › میکروفون اجازه دهید.";
+"Microphone off for Tether: the other side cannot hear you. Allow it in Settings › Privacy & Security › Microphone." = "میکروفون برای REGISTER خاموش است. در تنظیمات › حریم خصوصی › میکروفون روشنش کنید.";
 "This iPhone's microphone gives no sound: the other side may not hear you." = "میکروفون این آیفون صدایی نمی‌دهد: ممکن است طرف مقابل صدای شما را نشنود.";
 "Does not reach: microphone off on this iPhone" = "نمی‌رسد: میکروفون این آیفون خاموش است";
 "Does not reach: no sound from this iPhone's microphone" = "نمی‌رسد: از میکروفون این آیفون صدایی نمی‌آید";
@@ -293,4 +293,12 @@
 "Problem report" = "گزارش مشکل";
 "Building the report…" = "در حال ساخت گزارش…";
 "Share" = "اشتراک‌گذاری";
-"Phone numbers, names, message text, e-mail, addresses and keys are removed. Read it before you post it." = "شماره‌ها، نام‌ها، متن پیام‌ها، ایمیل، نشانی‌ها و کلیدها حذف شده‌اند. پیش از ارسال، آن را بخوانید.";
+"Phone numbers, names, message text, e-mail, addresses and keys are removed. Read it before you post it." = "شماره‌ها، نام‌ها و متن پیام‌ها در گزارش نیست.";
+
+/* REGISTER: Advanced and About */
+"Advanced" = "پیشرفته";
+"For finding problems. Everyday use does not need these." = "برای پیدا کردن مشکل. در استفادهٔ روزمره لازم نیست.";
+"About" = "درباره";
+"Version %@" = "نسخهٔ %@";
+"Check for updates" = "بررسی آپدیت";
+"Opens the releases page in Safari. The app itself sends nothing to the internet." = "صفحهٔ نسخه‌ها در سافاری باز می‌شود. خود برنامه چیزی به اینترنت نمی‌فرستد.";

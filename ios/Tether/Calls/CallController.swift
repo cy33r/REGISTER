@@ -174,7 +174,7 @@ final class CallController: NSObject {
         // proximity sensor) drops the speaker override, and the call went back to the earpiece by itself. The user did
         // not choose that: put the speaker back. A headset or car that takes the call still wins (not built in).
         if audioSessionActive && speakerWanted && (reason == .categoryChange || reason == .routeConfigurationChange || reason == .wakeFromSleep)
-            && kind != .speaker && kind.isBuiltIn {
+            && kind != .speaker && kind.isBuiltIn && Date().timeIntervalSince(CallAudio.categorySetAt) < 2 {
             LinkJournal.shared.add("speaker: the route fell back to \(kind.rawValue) (\(reason.map { Self.reasonName($0) } ?? "")); speaker put back")
             selectRoute(RouteOption.speakerID)
             return

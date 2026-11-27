@@ -36,7 +36,7 @@ class CallActivity : Activity() {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setBackgroundColor(getColor(R.color.background))
             setPadding(dp(24), dp(24), dp(24), dp(24))
         }
-        title = TextView(this).apply { textSize = 30f; setTextColor(getColor(R.color.text)); gravity = Gravity.CENTER }
+        title = TextView(this).apply { textSize = 30f; setTextColor(getColor(R.color.text)); gravity = Gravity.CENTER; textDirection = android.view.View.TEXT_DIRECTION_FIRST_STRONG_LTR }
         state = TextView(this).apply { textSize = 16f; setTextColor(getColor(R.color.muted)); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(40)) }
         buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
         root.addView(title); root.addView(state); root.addView(buttons)
@@ -79,13 +79,13 @@ class CallActivity : Activity() {
         })
         buttons.removeAllViews()
         if (info.state == "ringing") {
-            buttons.addView(round(getString(R.string.decline), R.color.bad) { CallRegistry.reject(info.cid) })
-            buttons.addView(round(getString(R.string.answer), R.color.ok) { CallRegistry.answer(info.cid) })
+            buttons.addView(round(getString(R.string.decline), R.color.call_red) { CallRegistry.reject(info.cid) })
+            buttons.addView(round(getString(R.string.answer), R.color.call_green) { CallRegistry.answer(info.cid) })
         } else {
             buttons.addView(round(getString(R.string.speaker), if (speaker) R.color.accent else R.color.muted) {
                 speaker = !speaker; CallRegistry.speaker(speaker)
             })
-            buttons.addView(round(getString(R.string.end_call), R.color.bad) { CallRegistry.end(info.cid) })
+            buttons.addView(round(getString(R.string.end_call), R.color.call_red) { CallRegistry.end(info.cid) })
         }
         main.postDelayed(::refresh, 500)
     }
@@ -93,7 +93,7 @@ class CallActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     private fun round(t: String, colorId: Int, onClick: () -> Unit) = Button(this).apply {
-        text = t; isAllCaps = false; setTextColor(getColor(R.color.text))
+        text = t; isAllCaps = false; setTextColor(getColor(R.color.on_accent))
         background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(getColor(colorId)) }
         layoutParams = LinearLayout.LayoutParams(dp(96), dp(96)).apply { marginStart = dp(16); marginEnd = dp(16) }
         setOnClickListener { onClick(); main.postDelayed(::refresh, 200) }
@@ -119,11 +119,12 @@ class DialerActivity : Activity() {
         }
         val number = EditText(this).apply {
             hint = getString(R.string.dialer_hint); textSize = 28f; inputType = android.text.InputType.TYPE_CLASS_PHONE
+            textDirection = android.view.View.TEXT_DIRECTION_LTR; gravity = Gravity.CENTER
             setText(intent?.data?.schemeSpecificPart ?: "")
         }
         val call = Button(this).apply {
-            text = getString(R.string.dial); isAllCaps = false; setTextColor(getColor(R.color.text))
-            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat(); setColor(getColor(R.color.ok)) }
+            text = getString(R.string.dial); isAllCaps = false; setTextColor(getColor(R.color.on_accent))
+            background = GradientDrawable().apply { cornerRadius = dp(24).toFloat(); setColor(getColor(R.color.call_green)) }
             setOnClickListener { CallRegistry.dial(this@DialerActivity, number.text.toString(), null); finish() }
         }
         root.addView(number); root.addView(call)

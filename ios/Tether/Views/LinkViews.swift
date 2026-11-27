@@ -203,14 +203,15 @@ struct LinkView: View {
                     if let last = model.lastSync {
                         LabeledContent("Last sync", value: last.formatted(date: .omitted, time: .shortened))
                     }
-                    Button("Sync everything again") { model.requestSync(full: true) }.disabled(!model.linkState.isConnected)
-                    NavigationLink("Link log") { LinkLogView() }
                     NavigationLink("Send a problem report") { ProblemReportView() }
+                    NavigationLink("Advanced") { AdvancedView() }
                     if model.isPaired {
                         Button("Pair again") { scanning = true }
                         Button("Unpair", role: .destructive) { confirmUnpair = true }
                     }
                 }
+
+                AboutSection()
                 #if DEBUG
                 DeveloperSection()
                 #endif
@@ -335,7 +336,7 @@ private struct SetupGuideSection: View {
             step(2, title: "Show the pairing code",
                  detail: "In Tether on Android, tap Pair iPhone. The QR code is available for five minutes.")
             step(3, title: "Scan with this device",
-                 detail: "Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in Cellular. You can also enter the code manually from the scanner.")
+                 detail: "Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in REGISTER. You can also enter the code manually from the scanner.")
         } header: {
             Text("Set up")
         } footer: {
@@ -383,6 +384,62 @@ struct DeveloperSection: View {
     }
 }
 #endif
+
+/// REGISTER: the technical options, out of the way of everyday use.
+struct AdvancedView: View {
+    @Environment(\.appModel) private var model
+    var body: some View { WithPerceptionTracking { bodyContent } }
+
+    @ViewBuilder private var bodyContent: some View {
+        List {
+            Section {
+                Button("Sync everything again") { model.requestSync(full: true) }.disabled(!model.linkState.isConnected)
+                NavigationLink("Link log") { LinkLogView() }
+            } footer: {
+                Text("For finding problems. Everyday use does not need these.")
+            }
+        }
+        .navigationTitle("Advanced")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// REGISTER: the app's version, and its releases page for updates (opened in Safari; the app itself sends nothing).
+struct AboutSection: View {
+    static let releases = URL(string: "https://github.com/cy33r/REGISTER/releases")!
+
+    private var version: String {
+        let info = Bundle.main.infoDictionary
+        let v = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let b = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(v) (\(b))"
+    }
+
+    var body: some View {
+        Section {
+            HStack(spacing: 14) {
+                Image(systemName: "simcard.fill")
+                    .font(.system(size: 22, weight: .semibold)).foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(LinearGradient(colors: [Color(red: 0.36, green: 0.96, blue: 0.4), Color(red: 0.13, green: 0.76, blue: 0.24)],
+                                               startPoint: .top, endPoint: .bottom),
+                                in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: "REGISTER").font(.v(.headline))
+                    Text("Version \(version)").font(.v(.subheadline)).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+            Link(destination: Self.releases) {
+                Label("Check for updates", systemImage: "arrow.down.circle")
+            }
+        } header: {
+            Text("About")
+        } footer: {
+            Text("Opens the releases page in Safari. The app itself sends nothing to the internet.")
+        }
+    }
+}
 
 /// The Android phone's VPN (any VPN app) and "Share VPN": its proxy lets this device use that VPN.
 struct VPNSection: View {
