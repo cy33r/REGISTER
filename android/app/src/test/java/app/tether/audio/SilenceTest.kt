@@ -15,8 +15,9 @@ class SilenceTest {
         assertEquals("Galaxy A71 / A73 (Snapdragon 730 / 778G)", Silence.SAMSUNG_QUALCOMM, CallAudio.pickSilence("samsung", null, "sm7150", "qcom"))
         assertTrue(Silence.SAMSUNG.vendorMicKeys)
         // Issue #13 (Galaxy A73, Android 16): the Text Call keys left the voice PCM held and the phone's own calls silent
-        // until a reboot; on Samsung's Qualcomm models they are never written.
-        assertFalse(Silence.SAMSUNG_QUALCOMM.vendorMicKeys)
+        // until a reboot; on Samsung's Qualcomm models they are never written. REGISTER: their mic key is Qualcomm's own
+        // Tx device mute instead (a mixer control, and the injected voice is mixed in after it).
+        assertTrue(Silence.SAMSUNG_QUALCOMM.vendorMicKeys)
     }
 
     @Test fun samsungOnQualcommAlsoMutesTheVoiceStream() {
@@ -30,7 +31,7 @@ class SilenceTest {
     @Test fun onlyTheVerifiedKeyIsTrustedWithABlindUplink() {
         // Samsung's tx key on the reference phone (Exynos): real calls heard both ways with it. Not on Samsung's
         // Qualcomm models (issue #2's Fold 6) nor MediaTek's UL key: never seen on a real call.
-        assertEquals(listOf(Silence.SAMSUNG), Silence.entries.filter { it.blindSafe })
+        assertEquals(listOf(Silence.SAMSUNG, Silence.SAMSUNG_QUALCOMM), Silence.entries.filter { it.blindSafe })
     }
 
     @Test fun qualcommFromSocOrPlatform() {

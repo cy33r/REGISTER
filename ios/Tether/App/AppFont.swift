@@ -7,6 +7,10 @@ import UIKit
 enum AppFont {
     static let family = "Vazirmatn"
 
+    /// Vazirmatn's letters are drawn larger than San Francisco's at the same point size (taller x-height and line
+    /// height): scaled so Persian text lines up with the system text, numbers and icons around it.
+    static let scale: CGFloat = 0.9
+
     /// The system text style sizes at the default Dynamic Type setting.
     static func size(_ style: Font.TextStyle) -> CGFloat {
         switch style {
@@ -25,7 +29,7 @@ enum AppFont {
     }
 
     static func ui(_ size: CGFloat, _ face: String = "Vazirmatn-Regular") -> UIFont {
-        UIFont(name: face, size: size) ?? .systemFont(ofSize: size)
+        UIFont(name: face, size: (size * scale).rounded()) ?? .systemFont(ofSize: size)
     }
 
     /// Navigation bar titles, tab bar labels, bar buttons and segmented controls in Vazirmatn.
@@ -67,7 +71,7 @@ enum AppFont {
 extension Font {
     /// A system text style in Vazirmatn (headline keeps its semibold weight).
     static func v(_ style: Font.TextStyle) -> Font {
-        let f = Font.custom(AppFont.family, size: AppFont.size(style), relativeTo: style)
+        let f = Font.custom(AppFont.family, size: (AppFont.size(style) * AppFont.scale).rounded(), relativeTo: style)
         return style == .headline ? f.weight(.semibold) : f
     }
 }

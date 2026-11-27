@@ -477,7 +477,7 @@ object CallAudio {
      * trinket, 2026-11-25) VOICE_UPLINK still heard the iPhone with the mute on while the far end heard nothing.
      */
     enum class Silence(val vendorMicKeys: Boolean, val voiceStream: Boolean, val blindSafe: Boolean, val telecomMuteKillsUplink: Boolean) {
-        SAMSUNG(true, false, true, false), SAMSUNG_QUALCOMM(false, true, false, true), QUALCOMM(false, true, false, true),
+        SAMSUNG(true, false, true, false), SAMSUNG_QUALCOMM(true, true, true, true), QUALCOMM(false, true, false, true),
         MEDIATEK(true, false, false, true), OTHER(false, true, false, false)
     }
 
@@ -509,20 +509,32 @@ object CallAudio {
         // Muting STREAM_VOICE_CALL needs MODIFY_PHONE_STATE (the shell has it); an app can only lower it to index 1.
         am.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, if (on) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE, 0)
         streamMuted = on
-        // REGISTER: One UI on Samsung's Qualcomm models ignores the stream mute, so the far end stayed audible in the
-        // A73's earpiece during a call taken on the iPhone. Set the HAL voice volume to 0 directly as well (Qualcomm's
-        // voice.c turns that into its "Voice Rx Device Mute" mixer control; nothing opens a PCM device). Restored by
-        // re-applying the stream's own index, which makes the policy manager send the real voice volume again.
-        if (silence == Silence.SAMSUNG_QUALCOMM || silence == Silence.QUALCOMM) runCatching {
-            if (on) { setHalVoiceVolume(0f); startKeeper() }
-            else { stopKeeper(); am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, am.getStreamVolume(AudioManager.STREAM_VOICE_CALL), 0) }
-        }.onFailure { ShellEnv.log("voice volume ${if (on) "0" else "restore"} failed: ${describe(it)}") }
     }
 
     /**
-     * REGISTER: One UI sends the call's own voice volume to the HAL again when the screen turns off (and on other
-     * routing events), so the far end came back in the A73's earpiece during a call taken on the iPhone. While the
-     * earpiece is to stay silent, put the stream mute and the HAL voice volume back every 150 ms.
+     * REGISTER: Qualcomm's own device mutes. Its HAL (voice.c) takes "device_mute=true;direction=rx|tx" and sets the
+     * "Voice Rx Device Mute" / "Voice Tx Device Mute" mixer controls: the earpiece and the microphone, at the device.
+     * The iPhone's voice goes in through the in-call music route (telephony_tx), which is mixed into the call after
+     * the Tx device, so it still reaches the other side. Only mixer controls: nothing opens a PCM device. One UI on
+     * the Galaxy A73 ignored the voice-call stream mute, and the far end stayed audible in the earpiece.
+     */
+    @Volatile private var deviceRx = false
+    @Volatile private var deviceTx = false
+
+    private fun deviceMute(direction: String, on: Boolean) {
+        am.setParameters("device_mute=${if (on) "true" else "false"};direction=$direction")
+    }
+
+    private fun qcDeviceMutes(rx: Boolean, tx: Boolean) {
+        deviceRx = rx; deviceTx = tx
+        deviceMute("rx", rx)
+        deviceMute("tx", tx)
+        if (rx || tx) startKeeper() else stopKeeper()
+    }
+
+    /**
+     * One UI sets the call's volume and mutes again on routing events (the screen turning off, the proximity sensor),
+     * which undid our mutes mid-call. While a mute is wanted, put the device mutes and the stream mute back every 150 ms.
      */
     @Volatile private var keeper: Thread? = null
 
@@ -530,36 +542,23 @@ object CallAudio {
         if (keeper?.isAlive == true) return
         keeper = Thread({
             var reapplied = 0
-            while (streamMuted) {
+            while (deviceRx || deviceTx) {
                 try {
                     Thread.sleep(150)
-                    if (!streamMuted) break
-                    if (!am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) {
+                    if (!deviceRx && !deviceTx) break
+                    if (deviceRx) deviceMute("rx", true)
+                    if (deviceTx) deviceMute("tx", true)
+                    if (streamMuted && !am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) {
                         am.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_MUTE, 0)
-                        if (reapplied++ < 20) ShellEnv.log("earpiece keeper: the voice-call stream was unmuted (screen ${if (screenOn()) "on" else "off"}); muted again")
+                        if (reapplied++ < 20) ShellEnv.log("earpiece keeper: the voice-call stream was unmuted; muted again")
                     }
-                    setHalVoiceVolume0Quiet()
                 } catch (_: InterruptedException) { break } catch (t: Throwable) { ShellEnv.log("earpiece keeper: ${describe(t)}") }
             }
             if (reapplied > 0) ShellEnv.log("earpiece keeper: stream mute put back $reapplied time(s)")
         }, "earpiece-keeper").apply { isDaemon = true; start() }
     }
 
-    private fun screenOn(): Boolean = runCatching {
-        Runtime.getRuntime().exec(arrayOf("dumpsys", "power")).inputStream.bufferedReader().useLines { l -> l.any { "mWakefulness=Awake" in it } }
-    }.getOrDefault(true)
-
     private fun stopKeeper() { keeper?.interrupt(); keeper = null }
-
-    private fun setHalVoiceVolume0Quiet() {
-        Class.forName("android.media.AudioSystem").getMethod("setVoiceVolume", Float::class.javaPrimitiveType).invoke(null, 0f)
-    }
-
-    /** android.media.AudioSystem.setVoiceVolume (hidden API; the shell may call it). */
-    private fun setHalVoiceVolume(v: Float) {
-        val r = Class.forName("android.media.AudioSystem").getMethod("setVoiceVolume", Float::class.javaPrimitiveType).invoke(null, v)
-        ShellEnv.log("HAL voice volume $v → $r")
-    }
 
     /** Result of [localCallAudio]: what was done, and whether every key was accepted. */
     data class Local(val note: String, val ok: Boolean)
@@ -591,7 +590,11 @@ object CallAudio {
                 Silence.SAMSUNG_QUALCOMM, Silence.QUALCOMM, Silence.OTHER -> {
                     // Unmute also when another helper process muted it (a crash mid-call): nobody else mutes this stream.
                     if (muted || streamMuted || am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) muteVoiceStream(muted)
-                    Local("voice stream ${if (muted) "muted" else "restored"}", true)
+                    if (mode != Silence.OTHER) {
+                        val tx = muted && mic && mode.vendorMicKeys
+                        qcDeviceMutes(rx = muted, tx = tx)
+                        Local("voice stream ${if (muted) "muted" else "restored"}, device mute rx=${if (muted) 1 else 0} tx=${if (tx) 1 else 0}", true)
+                    } else Local("voice stream ${if (muted) "muted" else "restored"}", true)
                 }
             }
         } catch (t: Throwable) {
@@ -616,6 +619,7 @@ object CallAudio {
             when (silence) {
                 Silence.SAMSUNG -> { if (on) VendorKeys.written(true); am.setParameters("l_voice_tx_control_mode=$m"); "samsung tx=$m" }
                 Silence.MEDIATEK -> { if (on) VendorKeys.written(true); am.setParameters("Set_SpeechCall_UL_Mute=$m"); "mediatek ul=$m" }
+                Silence.SAMSUNG_QUALCOMM -> { qcDeviceMutes(rx = deviceRx, tx = on); "device mute tx=$m" }
                 else -> null
             }
         } catch (t: Throwable) {
@@ -725,6 +729,8 @@ object CallAudio {
             VendorKeys.cleared()
         }
         runCatching { if (am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) { streamMuted = true; muteVoiceStream(false) } }
+        // Qualcomm device mutes are mixer controls: harmless to clear, and a helper that died mid-call may have set them.
+        if (silence == Silence.SAMSUNG_QUALCOMM || silence == Silence.QUALCOMM) runCatching { qcDeviceMutes(rx = false, tx = false) }
     }
 
     /**
