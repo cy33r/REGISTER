@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.0.0-beta.1 — 2026-11-27
+
+REGISTER, based on Tether 1.2.5.
+
+- Android phone: a call taken on the phone itself turns the screen off when the phone is held to the ear (proximity
+  sensor), as the stock dialer does. Not while the speaker, a headset or Bluetooth is on, or the call is on the iPhone.
+- Android phone, Qualcomm (Galaxy A73 and others): while a call is bridged to the iPhone, the HAL voice volume is set
+  to 0 as well, so the far end is no longer heard from the Android phone's earpiece (One UI ignores the stream mute).
+
 ## 1.2.5 — 2026-11-25
 
 - iPhone: Tether sets its CallKit provider up again when iOS restarted its call service under the running app. Until
