@@ -277,7 +277,7 @@ class MainActivity : Activity() {
         LinkLog.init(this)
         val body = LinkLog.tail(600)
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
-        val header = "Tether $version · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · " +
+        val header = "REGISTER $version · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · " +
             "Android ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT})"
         val text = header + "\n\n" + body.ifEmpty { getString(R.string.link_log_empty) }
         val view = TextView(this).apply {
@@ -293,7 +293,7 @@ class MainActivity : Activity() {
             }
             .setNeutralButton(R.string.action_copy) { _, _ ->
                 getSystemService(android.content.ClipboardManager::class.java)
-                    .setPrimaryClip(android.content.ClipData.newPlainText("Tether link log", text))
+                    .setPrimaryClip(android.content.ClipData.newPlainText("REGISTER link log", text))
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton(android.R.string.cancel, null)

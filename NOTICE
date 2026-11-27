@@ -1,5 +1,5 @@
 Tether
-Copyright (c) 2026 The Tether authors. Licensed under the MIT License (see LICENSE).
+Copyright (c) 2026 REGISTER. Licensed under the MIT License (see LICENSE).
 
 Tether's source code contains no third-party code. The Android apps are built with these libraries, fetched by
 Gradle at build time and included in the APKs you build (the Android client, `android/client`, uses only Concentus,

@@ -2,7 +2,7 @@
 // The Tether Swift SDK: protocol, crypto, framing, messages, audio (Opus, playout) and, on Apple platforms, the
 // CoreBluetooth client link. Add it to a package with
 //
-//     .package(url: "https://github.com/amirwmr/tether", from: "1.1.0")
+//     .package(url: "https://github.com/cy33r/REGISTER", from: "1.1.0")
 //
 // and depend on the "TetherCore" product. The sources live in ios/TetherCore, which is also a package of its own
 // (the iPhone app uses that one as a local package); both manifests build the same files. Guide: docs/SDK-swift.md.

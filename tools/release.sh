@@ -9,8 +9,8 @@
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
-AUTHOR_NAME="Amir Mohammad Rezaei"
-AUTHOR_EMAIL="73078630+amirwmr@users.noreply.github.com"
+AUTHOR_NAME="cy33r"
+AUTHOR_EMAIL="cy33r@users.noreply.github.com"
 
 version_code() {   # same rule as android/app/build.gradle.kts
   local v=$1 base pre n

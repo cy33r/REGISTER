@@ -514,9 +514,41 @@ object CallAudio {
         // voice.c turns that into its "Voice Rx Device Mute" mixer control; nothing opens a PCM device). Restored by
         // re-applying the stream's own index, which makes the policy manager send the real voice volume again.
         if (silence == Silence.SAMSUNG_QUALCOMM || silence == Silence.QUALCOMM) runCatching {
-            if (on) setHalVoiceVolume(0f)
-            else am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, am.getStreamVolume(AudioManager.STREAM_VOICE_CALL), 0)
+            if (on) { setHalVoiceVolume(0f); startKeeper() }
+            else { stopKeeper(); am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, am.getStreamVolume(AudioManager.STREAM_VOICE_CALL), 0) }
         }.onFailure { ShellEnv.log("voice volume ${if (on) "0" else "restore"} failed: ${describe(it)}") }
+    }
+
+    /**
+     * REGISTER: One UI sends the call's own voice volume to the HAL again when the screen turns off (and on other
+     * routing events), so the far end came back in the A73's earpiece during a call taken on the iPhone. While the
+     * earpiece is to stay silent, put the stream mute and the HAL voice volume back every 400 ms.
+     */
+    @Volatile private var keeper: Thread? = null
+
+    private fun startKeeper() {
+        if (keeper?.isAlive == true) return
+        keeper = Thread({
+            var reapplied = 0
+            while (streamMuted) {
+                try {
+                    Thread.sleep(400)
+                    if (!streamMuted) break
+                    if (!am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) {
+                        am.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_MUTE, 0)
+                        reapplied++
+                    }
+                    setHalVoiceVolume0Quiet()
+                } catch (_: InterruptedException) { break } catch (t: Throwable) { ShellEnv.log("earpiece keeper: ${describe(t)}") }
+            }
+            if (reapplied > 0) ShellEnv.log("earpiece keeper: stream mute put back $reapplied time(s)")
+        }, "earpiece-keeper").apply { isDaemon = true; start() }
+    }
+
+    private fun stopKeeper() { keeper?.interrupt(); keeper = null }
+
+    private fun setHalVoiceVolume0Quiet() {
+        Class.forName("android.media.AudioSystem").getMethod("setVoiceVolume", Float::class.javaPrimitiveType).invoke(null, 0f)
     }
 
     /** android.media.AudioSystem.setVoiceVolume (hidden API; the shell may call it). */

@@ -8,14 +8,14 @@
   tools/altstore-source.py selftest          (used by tools/test-all.sh: builds a fake IPA, makes and validates)
 
 The release workflow publishes the result as a release asset, so the source has the stable address
-https://github.com/amirwmr/tether/releases/latest/download/altstore.json (docs/INSTALL.md). Bundle id, version,
+https://github.com/cy33r/REGISTER/releases/latest/download/altstore.json . Bundle id, version,
 build number and minimum iOS are read from the IPA's own Info.plist, so the source can never disagree with it.
 Format: https://faq.altstore.io/developers/make-a-source (standard library only; runs on CI runners as is).
 """
 import argparse, io, json, os, plistlib, re, sys, tempfile, zipfile
 
-REPO = "https://github.com/amirwmr/tether"
-RAW = "https://raw.githubusercontent.com/amirwmr/tether/main"
+REPO = "https://github.com/cy33r/REGISTER"
+RAW = "https://raw.githubusercontent.com/cy33r/REGISTER/main"
 SCREENSHOTS = ["recents", "thread", "one-time-code", "contacts", "keypad", "in-call", "phone-tools", "messages-persian"]
 
 
@@ -47,26 +47,26 @@ def make(a):
         "minOSVersion": info.get("MinimumOSVersion", "16.0"),
     }
     source = {
-        "name": "Tether",
-        "identifier": "app.tether.source",
+        "name": "REGISTER",
+        "identifier": "app.register.source",
         "subtitle": "Your Android phone's calls and texts on your iPhone",
-        "description": "The iPhone app of Tether. It needs the Tether app on an Android phone that holds the SIM cards.",
+        "description": "The iPhone app of REGISTER. It needs the REGISTER app on an Android phone that holds the SIM cards.",
         "iconURL": f"{RAW}/ios/Tether/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
         "website": REPO,
         "tintColor": "#1E88E5",
         "apps": [{
-            "name": info.get("CFBundleDisplayName") or info.get("CFBundleName", "Tether"),
+            "name": info.get("CFBundleDisplayName") or info.get("CFBundleName", "REGISTER"),
             "bundleIdentifier": info["CFBundleIdentifier"],
-            "developerName": "The Tether authors",
+            "developerName": "REGISTER",
             "subtitle": "Calls, texts and contacts of your Android phone",
             "localizedDescription": (
-                "Tether puts an Android phone's calls, SMS, contacts and call history on your iPhone over an end-to-end "
-                "encrypted Bluetooth link, with no server and no account. Install the Tether app on the Android phone "
-                "with the SIM cards first, then pair with its QR code. Guide: " + REPO + "/blob/main/docs/INSTALL.md"),
+                "REGISTER puts an Android phone's calls, SMS, contacts and call history on your iPhone over an end-to-end "
+                "encrypted Bluetooth link, with no server and no account. Install REGISTER on the Android phone "
+                "with the SIM cards first, then pair with its QR code."),
             "iconURL": f"{RAW}/ios/Tether/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png",
             "tintColor": "#1E88E5",
             "category": "utilities",
-            "screenshots": [f"{RAW}/docs/images/{s}.png" for s in SCREENSHOTS],
+            "screenshots": [],
             "versions": [version],
             "appPermissions": {
                 "entitlements": [],

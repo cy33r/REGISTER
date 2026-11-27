@@ -40,11 +40,11 @@
 	<key>TetherCommunicationNotifications</key>
 	<string>$(TETHER_COMM_NOTIFICATIONS)</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Tether connects to your Android phone over Bluetooth to bring its calls and messages to this iPhone.</string>
+	<string>REGISTER AZ TARIGH-E BLUETOOTH BE GOOSHI-E ANDROID-ETOON VASL MISHE TA TAMASHA VA PAYAMHASH RO ROOYE IN IPHONE BIARE.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>The camera scans the pairing code shown on your Android phone.</string>
+	<string>DOORBIN CODE-E JOFTSAZI-E ROOYE GOOSHI-E ANDROID RO SCAN MIKONE.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Your voice is sent to the Android phone during calls.</string>
+	<string>SEDAYE SHOMA DAR TAMAS BE GOOSHI-E ANDROID FERESTADE MISHE.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>INSendMessageIntent</string>

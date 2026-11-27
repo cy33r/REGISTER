@@ -539,7 +539,7 @@ struct ProblemReportView: View {
     private func build() async {
         let (text, created) = await ProblemReportBuilder.text(model: model)
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd-HHmm"
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Tether problem report \(f.string(from: created)).txt")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("REGISTER problem report \(f.string(from: created)).txt")
         try? text.write(to: url, atomically: true, encoding: .utf8)
         report = text
         file = url

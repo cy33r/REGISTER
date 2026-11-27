@@ -1,7 +1,7 @@
 # Builds and publishes a GitHub Release when a version tag (v1.2.3, v1.2.3-rc.1) is pushed: Android APKs of the A54
 # app and the Android client, an unsigned iPhone app (.ipa) for sideloading tools that re-sign, SHA256SUMS and build
 # provenance attestations, and altstore.json (an AltStore / SideStore source for the IPA, tools/altstore-source.py).
-# Tags are made by tools/release.sh; see docs/RELEASING.md.
+# Tags are made by tools/release.sh.
 name: Release
 on:
   push:
@@ -201,20 +201,17 @@ jobs:
             echo
             echo "| File | Install it on |"
             echo "| --- | --- |"
-            echo "| \`REGISTER-Android-$VERSION*.apk\` | **The Android phone with the SIM cards** (any Android 10+ phone, not only an A54). Everyone needs this one. |"
-            echo "| \`REGISTER-iPhone-$VERSION-unsigned.ipa\` | **Your iPhone or iPad** (iOS 16+). Sideload it with SideStore, AltStore or Sideloadly and your own Apple ID. |"
+            echo "| \`REGISTER-Android-$VERSION*.apk\` | **The Android phone with the SIM cards** (Android 10+). Everyone needs this one. |"
+            echo "| \`REGISTER-iPhone-$VERSION-unsigned.ipa\` | **Your iPhone or iPad** (iOS 16+). Sign and install it with Feather, Sideloadly, AltStore or SideStore. |"
             echo "| \`REGISTER-Client-$VERSION*.apk\` | **A second Android phone** used instead of an iPhone (only if you have no iPhone). |"
             echo
             echo "- **AltStore / SideStore source** (add it once, then install and update from the app):"
             echo "  \`https://github.com/${{ github.repository }}/releases/latest/download/altstore.json\`"
-            echo "- Step by step: [Install guide](https://github.com/${{ github.repository }}/blob/main/docs/INSTALL.md) ·"
-            echo "  [راهنمای فارسی](https://github.com/${{ github.repository }}/blob/main/docs/fa/README.md)"
             echo "- A free Apple ID signs the iPhone app for 7 days; refresh it before then (your data and pairing are kept)."
-            echo "- From source: check out tag \`v$VERSION\` and follow docs/BUILD.md."
             echo
             echo "## Verify"
             echo
-            echo "\`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo ${{ github.repository }}\` (docs/RELEASING.md)."
+            echo "\`sha256sum -c SHA256SUMS\` and \`gh attestation verify <file> --repo ${{ github.repository }}\`."
           } > notes.md
           cat notes.md
       - name: Create the release
