@@ -63,6 +63,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.decorView.layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL   // REGISTER: Persian, right to left
         app = application as TetherApp
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(24), dp(16), dp(24)) }
         setContentView(ScrollView(this).apply { addView(root); setBackgroundColor(color(R.color.background)) })

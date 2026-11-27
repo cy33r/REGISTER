@@ -79,7 +79,7 @@ struct InCallView: View {
                 .accessibilityLabel(Text("Hide call screen"))
                 Spacer()
                 if let sim = model.simName(call.sub) {
-                    Label(sim, systemImage: "simcard").font(.footnote.weight(.medium)).opacity(0.7)
+                    Label(sim, systemImage: "simcard").font(.v(.footnote).weight(.medium)).opacity(0.7)
                 }
             }
             if !keypad, let img = photo(call) {
@@ -102,7 +102,7 @@ struct InCallView: View {
             if let w = model.micWarning, call.state != "ended" {
                 // The other side cannot hear this iPhone (#14): say it where the call is, not only in the Link tab.
                 Label(Microphone.text(w), systemImage: "mic.slash.fill")
-                    .font(.footnote.weight(.medium)).foregroundStyle(.yellow)
+                    .font(.v(.footnote).weight(.medium)).foregroundStyle(.yellow)
                     .multilineTextAlignment(.center).padding(.top, 4)
             }
         }
@@ -144,12 +144,12 @@ struct InCallView: View {
         HStack {
             VStack(spacing: 10) {
                 CallButton(color: .red, icon: "phone.down.fill") { model.calls.end(call.uuid) }
-                Text("Decline").font(.footnote)
+                Text("Decline").font(.v(.footnote))
             }
             Spacer()
             VStack(spacing: 10) {
                 CallButton(color: .green, icon: "phone.fill") { model.calls.answer(call.uuid) }
-                Text("Accept").font(.footnote)
+                Text("Accept").font(.v(.footnote))
             }
         }
         .padding(.horizontal, 12)
@@ -335,9 +335,9 @@ struct ReturnToCallBanner: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "phone.fill")
-                    Text("Touch to return to call").font(.footnote.weight(.semibold))
+                    Text("Touch to return to call").font(.v(.footnote).weight(.semibold))
                     Spacer()
-                    CallStatusText(call: call).font(.footnote)
+                    CallStatusText(call: call).font(.v(.footnote))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 8)

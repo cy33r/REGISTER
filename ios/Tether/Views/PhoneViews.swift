@@ -23,19 +23,19 @@ struct RecentsView: View {
                     Image(systemName: icon(e.type)).foregroundStyle(e.type == 3 || e.type == 5 ? .red : .secondary).frame(width: 22)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(e.name ?? model.displayName(e.num))
-                            .font(.body.weight(.semibold))
+                            .font(.v(.body).weight(.semibold))
                             .foregroundStyle(e.type == 3 ? .red : .primary)
                         HStack(spacing: 6) {
                             if let sim = model.simName(e.sub) {
-                                Text(sim).font(.caption2).padding(.horizontal, 5)
+                                Text(sim).font(.v(.caption2)).padding(.horizontal, 5)
                                     .background(Color(.tertiarySystemFill), in: Capsule())
                             }
                             if e.dur > 0 { Text(Duration.seconds(e.dur).formatted(.time(pattern: .minuteSecond))) }
                         }
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.v(.caption)).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Text(shortTime(e.date)).font(.caption).foregroundStyle(.secondary)
+                    Text(shortTime(e.date)).font(.v(.caption)).foregroundStyle(.secondary)
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { model.dial(e.num, sub: e.sub) }
@@ -146,10 +146,10 @@ struct KeypadView: View {
                     }
                 }
             if let name = model.name(for: number), !number.isEmpty {
-                Text(name).font(.subheadline).foregroundStyle(.secondary)
+                Text(name).font(.v(.subheadline)).foregroundStyle(.secondary)
             } else {
                 Button { if let s = UIPasteboard.general.string { number = PhoneNumber.digits(s) } } label: {
-                    Label("Paste", systemImage: "doc.on.clipboard").font(.caption)
+                    Label("Paste", systemImage: "doc.on.clipboard").font(.v(.caption))
                 }
             }
             SimPicker(sub: $sub)

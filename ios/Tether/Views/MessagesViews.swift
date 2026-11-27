@@ -40,8 +40,8 @@ struct MessagesView: View {
                     ForEach(hits) { m in
                         NavigationLink(value: m.thread) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(model.displayName(m.addr)).font(.subheadline.weight(.semibold))
-                                Text(MessageText.plain(m.body)).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                                Text(model.displayName(m.addr)).font(.v(.subheadline).weight(.semibold))
+                                Text(MessageText.plain(m.body)).font(.v(.subheadline)).foregroundStyle(.secondary).lineLimit(2)
                             }
                         }
                     }
@@ -138,22 +138,22 @@ struct ConversationRow: View {
             Avatar(name: model.displayName(conversation.address), photo: model.photo(for: conversation.address), size: 46)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(model.displayName(conversation.address)).font(.body.weight(.semibold)).lineLimit(1)
+                    Text(model.displayName(conversation.address)).font(.v(.body).weight(.semibold)).lineLimit(1)
                     if model.isMuted(conversation.thread) {
-                        Image(systemName: "moon.fill").font(.caption).foregroundStyle(.secondary)
+                        Image(systemName: "moon.fill").font(.v(.caption)).foregroundStyle(.secondary)
                             .accessibilityLabel(Text("Alerts hidden"))
                     }
                     if model.isBlocked(conversation.address) {
-                        Image(systemName: "hand.raised.fill").font(.caption).foregroundStyle(.secondary)
+                        Image(systemName: "hand.raised.fill").font(.v(.caption)).foregroundStyle(.secondary)
                             .accessibilityLabel(Text("Blocked"))
                     }
                     Spacer()
-                    Text(shortTime(conversation.last.date)).font(.subheadline).foregroundStyle(.secondary)
+                    Text(shortTime(conversation.last.date)).font(.v(.subheadline)).foregroundStyle(.secondary)
                 }
-                Text(MessageText.plain(conversation.last.body)).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                Text(MessageText.plain(conversation.last.body)).font(.v(.subheadline)).foregroundStyle(.secondary).lineLimit(2)
                     .frame(maxWidth: .infinity, minHeight: 36, alignment: .topLeading)
                 if let sim = model.simName(conversation.last.sub) {
-                    Label(sim, systemImage: "simcard").font(.caption2).foregroundStyle(.secondary).labelStyle(.titleAndIcon)
+                    Label(sim, systemImage: "simcard").font(.v(.caption2)).foregroundStyle(.secondary).labelStyle(.titleAndIcon)
                 }
             }
         }
@@ -217,14 +217,14 @@ struct ThreadView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(rows(msgs)) { r in
                         if let h = r.header {
-                            Text(h).font(.caption2.weight(.medium)).foregroundStyle(.secondary)
+                            Text(h).font(.v(.caption2).weight(.medium)).foregroundStyle(.secondary)
                                 .padding(.top, 14).padding(.bottom, 6)
                         }
                         Bubble(message: r.message, tail: r.tail)
                             .padding(.bottom, r.tail ? 8 : 2)
                             .id(r.message.id)
                         if let st = r.status {
-                            Text(st).font(.caption2.weight(r.failed ? .semibold : .regular))
+                            Text(st).font(.v(.caption2).weight(r.failed ? .semibold : .regular))
                                 .foregroundStyle(r.failed ? Color.red : Color.secondary)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .padding(.trailing, 6).padding(.top, -4).padding(.bottom, 8)
@@ -248,7 +248,7 @@ struct ThreadView: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 1) {
                     Avatar(name: name, photo: model.photo(for: address), size: 26)
-                    Text(name).font(.caption2).lineLimit(1)
+                    Text(name).font(.v(.caption2)).lineLimit(1)
                 }
                 .accessibilityElement(children: .combine)
             }
@@ -411,7 +411,7 @@ struct Bubble: View {
             if message.incoming, let code = rich.parsed.code {
                 Button { copy(code) } label: {
                     Label("Copy code \(code)", systemImage: "doc.on.doc")
-                        .font(.caption.weight(.semibold))
+                        .font(.v(.caption).weight(.semibold))
                         .padding(.horizontal, 10).padding(.vertical, 5)
                         .background(Color(.tertiarySystemFill), in: Capsule())
                 }
@@ -496,7 +496,7 @@ struct ComposeView: View {
                     if !to.isEmpty {
                         ForEach(suggestions, id: \.1) { name, number in
                             Button { to = number; field = .message } label: {
-                                VStack(alignment: .leading) { Text(name); Text(model.formatted(number)).font(.caption).foregroundStyle(.secondary) }
+                                VStack(alignment: .leading) { Text(name); Text(model.formatted(number)).font(.v(.caption)).foregroundStyle(.secondary) }
                             }
                         }
                     }

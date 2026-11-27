@@ -4,7 +4,7 @@ options:
   bundleIdPrefix: app.tether
   deploymentTarget:
     iOS: "16.0"
-  developmentLanguage: en
+  developmentLanguage: fa
   createIntermediateGroups: true
 settings:
   base:

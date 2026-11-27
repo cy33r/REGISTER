@@ -28,8 +28,8 @@ struct LinkView: View {
                                 .foregroundStyle(model.linkState.isConnected ? .teal : .secondary)
                                 .frame(width: 48)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(model.peerName).font(.headline)
-                                Text(stateLine).font(.subheadline).foregroundStyle(.secondary)
+                                Text(model.peerName).font(.v(.headline))
+                                Text(stateLine).font(.v(.subheadline)).foregroundStyle(.secondary)
                             }
                         }
                         .padding(.vertical, 6)
@@ -38,7 +38,7 @@ struct LinkView: View {
                     Section {
                         Label {
                             Text("Tether keeps the link in the background and when the screen is locked. Swiping Tether away in the app switcher stops it until you open it again: iOS does not relaunch a force-quit app for Bluetooth.")
-                                .font(.footnote)
+                                .font(.v(.footnote))
                         } icon: {
                             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
                         }
@@ -103,7 +103,7 @@ struct LinkView: View {
                             }
                         }
                         if let e = model.net?.err {
-                            Text(e).font(.footnote).foregroundStyle(.red)
+                            Text(e).font(.v(.footnote)).foregroundStyle(.red)
                         }
                     } header: {
                         Text("Internet")
@@ -118,10 +118,10 @@ struct LinkView: View {
                         LabeledContent("Audio helper", value: s.helper.state == "running" ? String(localized: "Running") : String(localized: "Stopped"))
                         if s.helper.audioUnavailable {
                             Text("Call audio is not available on this Android phone: it needs Android 11 or later. Calls are still answered, placed and ended here, but you hear and speak on the Android phone.")
-                                .font(.footnote).foregroundStyle(.orange)
+                                .font(.v(.footnote)).foregroundStyle(.orange)
                         } else if s.helper.audioBlocked {
                             Text("This Android phone's software gives Tether no call audio (the call sounds like silence to it). Calls are still answered, placed and ended here, but you hear and speak on the Android phone. A system update, or a self-test during a call that hears the call, turns call audio back on. If calls on the phone itself have no sound either, restart the phone once.")
-                                .font(.footnote).foregroundStyle(.orange)
+                                .font(.v(.footnote)).foregroundStyle(.orange)
                         }
                         if let m = s.helper.method { LabeledContent("Inject method", value: m) }
                         if let m = s.helper.capture { LabeledContent("Capture method", value: m) }
@@ -148,15 +148,15 @@ struct LinkView: View {
                             LabeledContent("Your voice in the call", value: CallAudioRows.voiceText(u, mic: micWarning))
                         }
                         if let w = micWarning {
-                            Text(Microphone.text(w)).font(.footnote).foregroundStyle(.red)
+                            Text(Microphone.text(w)).font(.v(.footnote)).foregroundStyle(.red)
                             if w == .denied, let url = URL(string: UIApplication.openSettingsURLString) {
-                                Link("Open Settings", destination: url).font(.footnote)
+                                Link("Open Settings", destination: url).font(.v(.footnote))
                             }
                         }
                         if let a = model.lastAudioStats {
                             LabeledContent("Last call") {
                                 Text(String(format: "buffer %.0f ms · jitter %.1f ms · gaps %d", a.delayMs, a.jitterMs, a.underruns))
-                                    .font(.caption.monospacedDigit())
+                                    .font(.v(.caption).monospacedDigit())
                             }
                         }
                         Button("Run call-audio self-test") { model.runSelftest() }
@@ -166,8 +166,8 @@ struct LinkView: View {
                                 HStack(alignment: .top) {
                                     Image(systemName: m.ok ? "checkmark.circle.fill" : "xmark.circle").foregroundStyle(m.ok ? .green : .secondary)
                                     VStack(alignment: .leading) {
-                                        Text(m.name).font(.subheadline)
-                                        if let n = m.note { Text(n).font(.caption).foregroundStyle(.secondary).textSelection(.enabled) }
+                                        Text(m.name).font(.v(.subheadline))
+                                        if let n = m.note { Text(n).font(.v(.caption)).foregroundStyle(.secondary).textSelection(.enabled) }
                                     }
                                 }
                             }
@@ -280,7 +280,7 @@ private struct SetupGuideSection: View {
         Section {
             VStack(alignment: .leading, spacing: 14) {
                 Image(systemName: "personalhotspot")
-                    .font(.title2.weight(.semibold))
+                    .font(.v(.title2).weight(.semibold))
                     .imageScale(.large)
                     .foregroundStyle(accent)
                     .padding(12)
@@ -288,26 +288,26 @@ private struct SetupGuideSection: View {
                     .accessibilityHidden(true)
 
                 Text("Connect your Android phone")
-                    .font(.title2.bold())
+                    .font(.v(.title2).bold())
                     .accessibilityAddTraits(.isHeader)
 
                 Text("Use your Android SIM for calls and texts on this device.")
-                    .font(.subheadline)
+                    .font(.v(.subheadline))
                     .foregroundStyle(.secondary)
 
                 Label(status, systemImage: bluetoothUnavailable ? "exclamationmark.circle.fill" : "link")
-                    .font(.footnote.weight(.semibold))
+                    .font(.v(.footnote).weight(.semibold))
                     .foregroundStyle(bluetoothUnavailable ? Color.orange : accent)
 
                 if linkState == .poweredOff {
                     Text("Turn on Bluetooth in Settings on this device before pairing.")
-                        .font(.footnote)
+                        .font(.v(.footnote))
                         .foregroundStyle(.secondary)
                 }
 
                 Button(action: scan) {
                     Label("Scan Pairing Code", systemImage: "qrcode.viewfinder")
-                        .font(.body.weight(.semibold))
+                        .font(.v(.body).weight(.semibold))
                         .foregroundStyle(.black)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 6)
@@ -318,7 +318,7 @@ private struct SetupGuideSection: View {
 
                 if linkState == .unauthorized, let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                     Link("Open Settings", destination: settingsURL)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.v(.subheadline).weight(.semibold))
                         .foregroundStyle(accent)
                 }
             }
@@ -347,15 +347,15 @@ private struct SetupGuideSection: View {
     private func step(_ number: Int, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Text(number.formatted())
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .font(.v(.subheadline).weight(.semibold).monospacedDigit())
                 .foregroundStyle(accent)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(accent.opacity(0.12), in: Capsule())
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.subheadline.weight(.semibold))
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).font(.v(.subheadline).weight(.semibold))
+                Text(detail).font(.v(.subheadline)).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
@@ -373,7 +373,7 @@ struct DeveloperSection: View {
         Section {
             Button { model.echoTest() } label: { Text(verbatim: "Echo round trip (x.tether.echo)") }
                 .disabled(!model.linkState.isConnected)
-            if let line = model.extensionLine { Text(verbatim: line).font(.footnote) }
+            if let line = model.extensionLine { Text(verbatim: line).font(.v(.footnote)) }
             Text(verbatim: model.extensions.summary).font(.caption2.monospaced()).foregroundStyle(.secondary)
         } header: {
             Text(verbatim: "Developer")
@@ -437,13 +437,13 @@ struct IPhoneProxySetup: View {
                         .foregroundStyle(.secondary)
                     BluetoothProxyNote(proxy: proxy)
                 }
-                .font(.footnote)
+                .font(.v(.footnote))
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Turn on the Wi-Fi hotspot to see the address to use.")
                     BluetoothProxyNote(proxy: proxy)
                 }
-                .font(.footnote).foregroundStyle(.secondary)
+                .font(.v(.footnote)).foregroundStyle(.secondary)
             }
         } label: {
             Label("Use it on this iPhone", systemImage: "iphone")
@@ -464,7 +464,7 @@ struct BluetoothProxyNote: View {
             Text("Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server \(bt?.ip ?? "192.168.44.1"):\(String(port)) there and turn it on.")
                 .foregroundStyle(.secondary)
         }
-        .font(.footnote)
+        .font(.v(.footnote))
     }
 }
 
@@ -527,7 +527,7 @@ struct ProblemReportView: View {
         .safeAreaInset(edge: .bottom) {
             if report != nil {
                 Text("Phone numbers, names, message text, e-mail, addresses and keys are removed. Read it before you post it.")
-                    .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .font(.v(.footnote)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .padding(.horizontal).padding(.vertical, 8).frame(maxWidth: .infinity)
                     .background(Color(.systemGroupedBackground))
             }
@@ -559,7 +559,7 @@ struct BlockedListView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(model.name(for: n) ?? n)
                         if model.name(for: n) != nil {
-                            Text(n).font(.caption).foregroundStyle(.secondary).environment(\.layoutDirection, .leftToRight)
+                            Text(n).font(.v(.caption)).foregroundStyle(.secondary).environment(\.layoutDirection, .leftToRight)
                         }
                     }
                     .swipeActions {
@@ -612,7 +612,7 @@ struct SigningSection: View {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(days == 0 ? String(localized: "Today") : String(localized: "in \(days) days"))
                             .foregroundStyle(days <= 2 ? Color.red : (days <= 4 ? Color.orange : Color.primary))
-                        Text(expiry.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(.secondary)
+                        Text(expiry.formatted(date: .abbreviated, time: .shortened)).font(.v(.caption)).foregroundStyle(.secondary)
                     }
                 }
             } header: {
@@ -712,7 +712,7 @@ struct PhoneToolsSection: View {
                     HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Waiting for the carrier…").foregroundStyle(.secondary) }
                 } else if let r = model.ussdResult {
                     Text(r.ok ? (r.text ?? "") : (r.err ?? String(localized: "No answer")))
-                        .font(.callout).foregroundStyle(r.ok ? Color.primary : Color.red).textSelection(.enabled)
+                        .font(.v(.callout)).foregroundStyle(r.ok ? Color.primary : Color.red).textSelection(.enabled)
                 }
             }
             if tools.find == true {
@@ -727,10 +727,10 @@ struct PhoneToolsSection: View {
                 } label: { Label("Ringer", systemImage: "bell") }
                 .disabled(!model.linkState.isConnected)
                 if status.dnd == false {
-                    Text("Silent needs Do Not Disturb access for Tether on the Android phone.").font(.footnote).foregroundStyle(.secondary)
+                    Text("Silent needs Do Not Disturb access for Tether on the Android phone.").font(.v(.footnote)).foregroundStyle(.secondary)
                 }
             }
-            if let e = model.phoneToolError { Text(e).font(.footnote).foregroundStyle(.red) }
+            if let e = model.phoneToolError { Text(e).font(.v(.footnote)).foregroundStyle(.red) }
         } header: {
             Text("Phone tools")
         } footer: {
@@ -782,24 +782,24 @@ struct PairingView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Scan the code shown in Tether on the Android phone.")
-                        .font(.body)
+                        .font(.v(.body))
                         .foregroundStyle(.secondary)
 
                     cameraPanel
 
                     if let error {
                         Label(error, systemImage: "exclamationmark.circle")
-                            .font(.callout)
+                            .font(.v(.callout))
                             .foregroundStyle(.orange)
                     }
 
                     if cameraState == .permissionDenied, let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                        Link("Open Settings", destination: settingsURL).font(.body.weight(.semibold))
+                        Link("Open Settings", destination: settingsURL).font(.v(.body).weight(.semibold))
                     }
 
                     Button { openManualEntry() } label: {
                         Label("Enter Code Manually", systemImage: "keyboard")
-                            .font(.body.weight(.semibold))
+                            .font(.v(.body).weight(.semibold))
                             .foregroundStyle(.black)
                             .multilineTextAlignment(.center)
                             .padding(.vertical, 6)
@@ -874,9 +874,9 @@ struct PairingView: View {
 
     private func cameraMessage(_ title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         VStack(spacing: 8) {
-            Image(systemName: "camera.fill").font(.title2).foregroundStyle(accent).accessibilityHidden(true)
-            Text(title).font(.headline)
-            Text(detail).font(.callout).foregroundStyle(.secondary)
+            Image(systemName: "camera.fill").font(.v(.title2)).foregroundStyle(accent).accessibilityHidden(true)
+            Text(title).font(.v(.headline))
+            Text(detail).font(.v(.callout)).foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
         .padding(24)

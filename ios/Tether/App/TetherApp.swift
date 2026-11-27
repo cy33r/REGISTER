@@ -123,6 +123,8 @@ struct TetherApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @Environment(\.scenePhase) private var phase
 
+    init() { AppFont.applyAppearance() }
+
     var body: some Scene {
         WindowGroup {
             // As the unit tests' host the app shows nothing: the tests drive the model, not the screens.
@@ -132,6 +134,7 @@ struct TetherApp: App {
 
     private var content: some View {
         RootView()
+            .environment(\.font, .v(.body))
             .environment(\.appModel, AppModel.shared)
             .environment(\.router, Router.shared)
             .onOpenURL { Router.shared.open(url: $0) }

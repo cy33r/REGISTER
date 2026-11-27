@@ -7,10 +7,11 @@
 FIRST REGISTER RELEASE.
 
 - The app is called REGISTER on both phones, with its own icon (a SIM card with signal waves).
-- iPhone: every text in uppercase Finglish, whatever the iPhone's language; it follows the iPhone's light or dark mode
+- iPhone and Android: every text in Persian, right to left, in the Vazirmatn typeface (SIL Open Font License),
+  whatever the phone's language.
+- iPhone: it follows the iPhone's light or dark mode
   and uses the iPhone's blue, like the Phone and Messages apps. The call screen is dark grey like the iPhone's own.
 - Release files are named REGISTER-Android, REGISTER-iPhone and REGISTER-Client.
-- Android phone: every text in uppercase Finglish too.
 - Android phone, Qualcomm: the earpiece stays silent when the screen turns off during a call taken on the iPhone
   (One UI put the call's volume back; REGISTER now mutes it again every 400 ms while the call is bridged).
 

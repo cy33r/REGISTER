@@ -26,7 +26,7 @@ struct ContactsView: View {
                             HStack(spacing: 12) {
                                 Avatar(name: c.name, photo: c.photo, size: 36)
                                 Text(c.name)
-                                if c.starred { Image(systemName: "star.fill").font(.caption2).foregroundStyle(.yellow) }
+                                if c.starred { Image(systemName: "star.fill").font(.v(.caption2)).foregroundStyle(.yellow) }
                             }
                         }
                     }
@@ -70,7 +70,7 @@ struct FavouriteRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(contact.name)
                 if let p = contact.phones.first {
-                    Text(LocalizedStringKey(p.type.capitalized)).font(.caption).foregroundStyle(.secondary)
+                    Text(LocalizedStringKey(p.type.capitalized)).font(.v(.caption)).foregroundStyle(.secondary)
                 }
             }
             Spacer()
@@ -104,7 +104,7 @@ struct ContactDetailView: View {
             Section {
                 VStack(spacing: 10) {
                     Avatar(name: contact.name, photo: contact.photo, size: 96)
-                    Text(contact.name).font(.title2.weight(.semibold))
+                    Text(contact.name).font(.v(.title2).weight(.semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
@@ -117,7 +117,7 @@ struct ContactDetailView: View {
                                 if let label = p.label, !label.trimmingCharacters(in: .whitespaces).isEmpty { Text(verbatim: label) }
                                 else { Text(LocalizedStringKey(p.type.capitalized)) }
                             }
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.v(.caption)).foregroundStyle(.secondary)
                             Text(model.formatted(p.n)).environment(\.layoutDirection, .leftToRight)
                         }
                         Spacer()
@@ -128,7 +128,7 @@ struct ContactDetailView: View {
                 }
                 ForEach(contact.emails, id: \.self) { e in
                     VStack(alignment: .leading) {
-                        Text("Email").font(.caption).foregroundStyle(.secondary)
+                        Text("Email").font(.v(.caption)).foregroundStyle(.secondary)
                         Text(e)
                     }
                 }
@@ -200,7 +200,7 @@ struct AddContactView: View {
                     }
                     TextField("Email", text: $email).keyboardType(.emailAddress).textInputAutocapitalization(.never)
                 }
-                Section { Text("The contact is saved on your Android phone.").font(.footnote).foregroundStyle(.secondary) }
+                Section { Text("The contact is saved on your Android phone.").font(.v(.footnote)).foregroundStyle(.secondary) }
             }
             .scrollDismissesKeyboard(.interactively)
             .keyboardDoneButton()
@@ -283,7 +283,7 @@ struct EditContactView: View {
                         Label("Add email", systemImage: "plus.circle.fill")
                     }
                 }
-                Section { Text("Changes are saved on your Android phone.").font(.footnote).foregroundStyle(.secondary) }
+                Section { Text("Changes are saved on your Android phone.").font(.v(.footnote)).foregroundStyle(.secondary) }
             }
             .scrollDismissesKeyboard(.interactively)
             .keyboardDoneButton()

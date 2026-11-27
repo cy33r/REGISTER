@@ -38,7 +38,7 @@ struct RootView: View {
         .overlay(alignment: .bottom) {
             if let err = model.lastError {
                 Text(err)
-                    .font(.footnote)
+                    .font(.v(.footnote))
                     .padding(.horizontal, 14).padding(.vertical, 10)
                     .background(.thinMaterial, in: Capsule())
                     .padding(.bottom, 64)
@@ -49,7 +49,7 @@ struct RootView: View {
         .overlay(alignment: .bottom) {
             if let n = model.notice {
                 Label(n, systemImage: "checkmark.circle.fill")
-                    .font(.footnote.weight(.semibold))
+                    .font(.v(.footnote).weight(.semibold))
                     .padding(.horizontal, 14).padding(.vertical, 10)
                     .background(.thinMaterial, in: Capsule())
                     .padding(.bottom, 64)
@@ -93,7 +93,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { model.showCallScreen && model.callScreen != nil },
                                               set: { model.showCallScreen = $0 })) {
             // Presented content does not always inherit environment objects: pass them explicitly.
-            InCallView().environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
+            InCallView().environment(\.font, .v(.body)).environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
         }
         .tint(Color("AccentColor"))
         .task {
@@ -113,14 +113,14 @@ struct RemoteCallBanner: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.left.arrow.right")
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(model.displayName(c.num)).font(.footnote.weight(.semibold)).lineLimit(1)
-                    Text("On \(c.at ?? String(localized: "another device"))").font(.caption2).opacity(0.85)
+                    Text(model.displayName(c.num)).font(.v(.footnote).weight(.semibold)).lineLimit(1)
+                    Text("On \(c.at ?? String(localized: "another device"))").font(.v(.caption2)).opacity(0.85)
                 }
                 Spacer()
                 Button {
                     model.calls.take(c.cid)
                 } label: {
-                    Text("Move here").font(.footnote.weight(.semibold))
+                    Text("Move here").font(.v(.footnote).weight(.semibold))
                         .padding(.horizontal, 12).padding(.vertical, 5)
                         .background(.white.opacity(0.22), in: Capsule())
                 }
@@ -142,13 +142,13 @@ struct StatusStrip: View {
     @ViewBuilder private var bodyContent: some View {
         HStack(spacing: 10) {
             Circle().fill(dotColor).frame(width: 8, height: 8)
-            Text(stateText).font(.caption.weight(.semibold))
+            Text(stateText).font(.v(.caption).weight(.semibold))
             Spacer(minLength: 4)
             if let s = model.status, model.linkState.isConnected || AppModel.demoMode {
                 ForEach(s.sims) { sim in SimStatus(sim: sim, showName: s.sims.count > 1) }
                 HStack(spacing: 2) {
                     Image(systemName: s.charging ? "battery.100.bolt" : batteryIcon(s.battery))
-                    Text("\(s.battery)%").font(.caption2.monospacedDigit())
+                    Text("\(s.battery)%").font(.v(.caption2).monospacedDigit())
                 }
                 .foregroundStyle(s.battery <= 15 && !s.charging ? .red : .secondary)
             }
@@ -200,13 +200,13 @@ struct SimStatus: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            if showName { Text(sim.name).font(.caption2).lineLimit(1) }
+            if showName { Text(sim.name).font(.v(.caption2)).lineLimit(1) }
             if sim.hasService {
                 SignalBars(level: sim.signal)
-                if let n = sim.net { Text(n).font(.caption2.weight(.semibold)) }
-                if sim.roaming == true { Text("R").font(.caption2.weight(.bold)).foregroundStyle(.orange) }
+                if let n = sim.net { Text(n).font(.v(.caption2).weight(.semibold)) }
+                if sim.roaming == true { Text("R").font(.v(.caption2).weight(.bold)).foregroundStyle(.orange) }
             } else {
-                Text(sim.service == "emergency" ? "SOS" : String(localized: "No service")).font(.caption2).foregroundStyle(.secondary)
+                Text(sim.service == "emergency" ? "SOS" : String(localized: "No service")).font(.v(.caption2)).foregroundStyle(.secondary)
             }
         }
         .accessibilityElement(children: .combine)
@@ -274,7 +274,7 @@ struct SimPicker: View {
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "simcard")
-                    Text(label).font(.caption.weight(.medium))
+                    Text(label).font(.v(.caption).weight(.medium))
                 }
                 .padding(.horizontal, 10).padding(.vertical, 6)
                 .background(Color(.tertiarySystemFill), in: Capsule())

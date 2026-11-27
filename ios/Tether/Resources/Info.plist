@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>fa</string>
 	<key>CFBundleDisplayName</key>
 	<string>$(TETHER_DISPLAY_NAME)</string>
 	<key>CFBundleExecutable</key>
@@ -25,7 +25,7 @@
 	<string>6.0</string>
 	<key>CFBundleLocalizations</key>
 	<array>
-		<string>en</string>
+		<string>fa</string>
 	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
@@ -35,16 +35,24 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Vazirmatn-Light.ttf</string>
+		<string>Vazirmatn-Regular.ttf</string>
+		<string>Vazirmatn-Medium.ttf</string>
+		<string>Vazirmatn-SemiBold.ttf</string>
+		<string>Vazirmatn-Bold.ttf</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>TetherCommunicationNotifications</key>
 	<string>$(TETHER_COMM_NOTIFICATIONS)</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>REGISTER AZ TARIGH-E BLUETOOTH BE GOOSHI-E ANDROID-ETOON VASL MISHE TA TAMASHA VA PAYAMHASH RO ROOYE IN IPHONE BIARE.</string>
+	<string>REGISTER از طریق بلوتوث به گوشی اندروید شما وصل می‌شود تا تماس‌ها و پیام‌های آن را روی این آیفون بیاورد.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>DOORBIN CODE-E JOFTSAZI-E ROOYE GOOSHI-E ANDROID RO SCAN MIKONE.</string>
+	<string>دوربین کد جفت‌سازی نمایش‌داده‌شده روی گوشی اندروید را اسکن می‌کند.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>SEDAYE SHOMA DAR TAMAS BE GOOSHI-E ANDROID FERESTADE MISHE.</string>
+	<string>صدای شما در طول تماس به گوشی اندروید فرستاده می‌شود.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>INSendMessageIntent</string>
