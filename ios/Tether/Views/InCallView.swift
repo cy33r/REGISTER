@@ -57,7 +57,7 @@ struct InCallView: View {
                 }
                 LinearGradient(colors: [.black.opacity(0.25), .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
             } else {
-                LinearGradient(colors: [Color(red: 0.05, green: 0.22, blue: 0.21), .black], startPoint: .top, endPoint: .bottom)   // theme: ok, the accent darkened to black behind the call
+                LinearGradient(colors: [Color(red: 0.16, green: 0.16, blue: 0.18), .black], startPoint: .top, endPoint: .bottom)   // theme: ok, the iPhone call screen's dark grey to black
                     .opacity(0.9)
             }
         }

@@ -6,6 +6,11 @@
 
 REGISTER, based on Tether 1.2.5.
 
+- The app is called REGISTER on both phones, with its own icon (a SIM card with signal waves).
+- iPhone: every text in uppercase Finglish, whatever the iPhone's language; it follows the iPhone's light or dark mode
+  and uses the iPhone's blue, like the Phone and Messages apps. The call screen is dark grey like the iPhone's own.
+- Release files are named REGISTER-Android, REGISTER-iPhone and REGISTER-Client.
+
 - Android phone: a call taken on the phone itself turns the screen off when the phone is held to the ear (proximity
   sensor), as the stock dialer does. Not while the speaker, a headset or Bluetooth is on, or the call is on the iPhone.
 - Android phone, Qualcomm (Galaxy A73 and others): while a call is bridged to the iPhone, the HAL voice volume is set

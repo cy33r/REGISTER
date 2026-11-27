@@ -99,10 +99,10 @@ jobs:
           SUFFIX: ${{ steps.key.outputs.suffix }}
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/Tether-A54-$VERSION$SUFFIX.apk"
-          cp android/client/build/outputs/apk/release/client-release.apk "dist/Tether-Client-$VERSION$SUFFIX.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/REGISTER-Android-$VERSION$SUFFIX.apk"
+          cp android/client/build/outputs/apk/release/client-release.apk "dist/REGISTER-Client-$VERSION$SUFFIX.apk"
           aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort | tail -1)
-          "$aapt2" dump badging "dist/Tether-A54-$VERSION$SUFFIX.apk" | head -1
+          "$aapt2" dump badging "dist/REGISTER-Android-$VERSION$SUFFIX.apk" | head -1
           rm -f "$RUNNER_TEMP/release.jks"
       - uses: actions/upload-artifact@v7
         with:
@@ -138,7 +138,7 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' -c 'Print CFBundleVersion' "$app/Info.plist"
           mkdir -p work/Payload dist
           cp -R "$app" work/Payload/
-          (cd work && zip -qry "../dist/Tether-$VERSION-unsigned.ipa" Payload)
+          (cd work && zip -qry "../dist/REGISTER-iPhone-$VERSION-unsigned.ipa" Payload)
       - uses: actions/upload-artifact@v7
         with:
           name: ios
@@ -201,9 +201,9 @@ jobs:
             echo
             echo "| File | Install it on |"
             echo "| --- | --- |"
-            echo "| \`Tether-A54-$VERSION*.apk\` | **The Android phone with the SIM cards** (any Android 10+ phone, not only an A54). Everyone needs this one. |"
-            echo "| \`Tether-$VERSION-unsigned.ipa\` | **Your iPhone or iPad** (iOS 16+). Sideload it with SideStore, AltStore or Sideloadly and your own Apple ID. |"
-            echo "| \`Tether-Client-$VERSION*.apk\` | **A second Android phone** used instead of an iPhone (only if you have no iPhone). |"
+            echo "| \`REGISTER-Android-$VERSION*.apk\` | **The Android phone with the SIM cards** (any Android 10+ phone, not only an A54). Everyone needs this one. |"
+            echo "| \`REGISTER-iPhone-$VERSION-unsigned.ipa\` | **Your iPhone or iPad** (iOS 16+). Sideload it with SideStore, AltStore or Sideloadly and your own Apple ID. |"
+            echo "| \`REGISTER-Client-$VERSION*.apk\` | **A second Android phone** used instead of an iPhone (only if you have no iPhone). |"
             echo
             echo "- **AltStore / SideStore source** (add it once, then install and update from the app):"
             echo "  \`https://github.com/${{ github.repository }}/releases/latest/download/altstore.json\`"
