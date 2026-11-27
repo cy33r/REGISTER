@@ -176,14 +176,23 @@ object CallRegistry {
 
 /** Default-dialer in-call service: owns call control and the (minimal) on-device call screen. */
 class TetherInCallService : InCallService() {
+    private lateinit var proximity: ProximityGuard
+
     override fun onCreate() {
         super.onCreate()
         CallRegistry.service = this
+        proximity = ProximityGuard(this)
     }
 
     override fun onDestroy() {
+        proximity.stop()
         if (CallRegistry.service === this) CallRegistry.service = null
         super.onDestroy()
+    }
+
+    override fun onCallAudioStateChanged(audioState: CallAudioState?) {
+        super.onCallAudioStateChanged(audioState)
+        proximity.update(audioState?.route)
     }
 
     override fun onCallAdded(call: Call) {
@@ -202,10 +211,12 @@ class TetherInCallService : InCallService() {
         CallRegistry.added(call)
         call.registerCallback(uiCallback)
         showCallUi(call)
+        proximity.start()
     }
 
     private val uiCallback = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) {
+            proximity.update()
             if (state == Call.STATE_DISCONNECTED) return
             showCallUi(call)
         }
@@ -214,6 +225,8 @@ class TetherInCallService : InCallService() {
     override fun onCallRemoved(call: Call) {
         call.unregisterCallback(uiCallback)
         CallRegistry.removed(call)
+        proximity.update()
+        if (CallRegistry.active().isEmpty()) proximity.stop()
         if (CallRegistry.active().isEmpty()) getSystemService(NotificationManager::class.java).cancel(NOTIF_CALL)
     }
 

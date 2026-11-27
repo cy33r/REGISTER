@@ -509,6 +509,20 @@ object CallAudio {
         // Muting STREAM_VOICE_CALL needs MODIFY_PHONE_STATE (the shell has it); an app can only lower it to index 1.
         am.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, if (on) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE, 0)
         streamMuted = on
+        // REGISTER: One UI on Samsung's Qualcomm models ignores the stream mute, so the far end stayed audible in the
+        // A73's earpiece during a call taken on the iPhone. Set the HAL voice volume to 0 directly as well (Qualcomm's
+        // voice.c turns that into its "Voice Rx Device Mute" mixer control; nothing opens a PCM device). Restored by
+        // re-applying the stream's own index, which makes the policy manager send the real voice volume again.
+        if (silence == Silence.SAMSUNG_QUALCOMM || silence == Silence.QUALCOMM) runCatching {
+            if (on) setHalVoiceVolume(0f)
+            else am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, am.getStreamVolume(AudioManager.STREAM_VOICE_CALL), 0)
+        }.onFailure { ShellEnv.log("voice volume ${if (on) "0" else "restore"} failed: ${describe(it)}") }
+    }
+
+    /** android.media.AudioSystem.setVoiceVolume (hidden API; the shell may call it). */
+    private fun setHalVoiceVolume(v: Float) {
+        val r = Class.forName("android.media.AudioSystem").getMethod("setVoiceVolume", Float::class.javaPrimitiveType).invoke(null, v)
+        ShellEnv.log("HAL voice volume $v → $r")
     }
 
     /** Result of [localCallAudio]: what was done, and whether every key was accepted. */
