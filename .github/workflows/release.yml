@@ -5,7 +5,7 @@
 name: Release
 on:
   push:
-    tags: ["v*.*.*"]
+    tags: ["v*.*.*", "V*.*.*"]
   workflow_dispatch:
     inputs:
       tag:
@@ -36,7 +36,7 @@ jobs:
       - id: v
         run: |
           version=$(tr -d '[:space:]' < VERSION)
-          if [ "v$version" != "$TAG" ]; then
+          if [ "v$version" != "$(echo "$TAG" | tr "[:upper:]" "[:lower:]")" ]; then
             echo "::error::tag $TAG does not match VERSION ($version)"; exit 1
           fi
           marketing=${version%%-*}
@@ -229,5 +229,5 @@ jobs:
             gh release upload "$TAG" dist/* --clobber
             gh release edit "$TAG" --notes-file notes.md
           else
-            gh release create "$TAG" dist/* --title "Tether $VERSION" --notes-file notes.md --verify-tag $flags
+            gh release create "$TAG" dist/* --title "REGISTER $VERSION" --notes-file notes.md --verify-tag $flags
           fi
