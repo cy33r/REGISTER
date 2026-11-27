@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || env.TAG }}
       - id: v
         run: |
           version=$(tr -d '[:space:]' < VERSION)
@@ -60,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || env.TAG }}
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -118,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || env.TAG }}
       - name: Swift package TetherCore builds at this tag
         working-directory: ios/TetherCore
         run: swift build -c release
@@ -157,7 +157,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ env.TAG }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || env.TAG }}
       - uses: actions/download-artifact@v8
         with:
           path: dist
