@@ -170,6 +170,15 @@ final class CallController: NSObject {
         let hasReceiver = UIDevice.current.userInterfaceIdiom == .phone
         let options = AudioRoutes.options(inputs: available, hasReceiver: hasReceiver)
         let kind = AudioRoutes.current(outputs: outs.map(\.type))
+        // REGISTER: setting the session's category again during a call (an engine restart, an interruption, the
+        // proximity sensor) drops the speaker override, and the call went back to the earpiece by itself. The user did
+        // not choose that: put the speaker back. A headset or car that takes the call still wins (not built in).
+        if audioSessionActive && speakerWanted && (reason == .categoryChange || reason == .routeConfigurationChange || reason == .wakeFromSleep)
+            && kind != .speaker && kind.isBuiltIn {
+            LinkJournal.shared.add("speaker: the route fell back to \(kind.rawValue) (\(reason.map { Self.reasonName($0) } ?? "")); speaker put back")
+            selectRoute(RouteOption.speakerID)
+            return
+        }
         // Before CallKit activates the session the route is not the call's yet: a speaker choice made while connecting
         // is kept (and shown) until didActivate applies it; resetting it here lost it (#15).
         speakerWanted = AudioRoutes.speakerWanted(previous: speakerWanted, sessionActive: audioSessionActive, outputs: outs.map(\.type))

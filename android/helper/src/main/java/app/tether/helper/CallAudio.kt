@@ -522,7 +522,7 @@ object CallAudio {
     /**
      * REGISTER: One UI sends the call's own voice volume to the HAL again when the screen turns off (and on other
      * routing events), so the far end came back in the A73's earpiece during a call taken on the iPhone. While the
-     * earpiece is to stay silent, put the stream mute and the HAL voice volume back every 400 ms.
+     * earpiece is to stay silent, put the stream mute and the HAL voice volume back every 150 ms.
      */
     @Volatile private var keeper: Thread? = null
 
@@ -532,11 +532,11 @@ object CallAudio {
             var reapplied = 0
             while (streamMuted) {
                 try {
-                    Thread.sleep(400)
+                    Thread.sleep(150)
                     if (!streamMuted) break
                     if (!am.isStreamMute(AudioManager.STREAM_VOICE_CALL)) {
                         am.adjustStreamVolume(AudioManager.STREAM_VOICE_CALL, AudioManager.ADJUST_MUTE, 0)
-                        reapplied++
+                        if (reapplied++ < 20) ShellEnv.log("earpiece keeper: the voice-call stream was unmuted (screen ${if (screenOn()) "on" else "off"}); muted again")
                     }
                     setHalVoiceVolume0Quiet()
                 } catch (_: InterruptedException) { break } catch (t: Throwable) { ShellEnv.log("earpiece keeper: ${describe(t)}") }
@@ -544,6 +544,10 @@ object CallAudio {
             if (reapplied > 0) ShellEnv.log("earpiece keeper: stream mute put back $reapplied time(s)")
         }, "earpiece-keeper").apply { isDaemon = true; start() }
     }
+
+    private fun screenOn(): Boolean = runCatching {
+        Runtime.getRuntime().exec(arrayOf("dumpsys", "power")).inputStream.bufferedReader().useLines { l -> l.any { "mWakefulness=Awake" in it } }
+    }.getOrDefault(true)
 
     private fun stopKeeper() { keeper?.interrupt(); keeper = null }
 
