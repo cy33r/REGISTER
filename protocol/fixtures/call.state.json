@@ -29,6 +29,23 @@
       "hold": false,
       "cause": "remote"
     },
+    "busy": {
+      "cid": "c4",
+      "num": "+10000000009",
+      "state": "ended",
+      "dir": "out",
+      "hold": false,
+      "cause": "busy",
+      "tone": "busy"
+    },
+    "failed": {
+      "cid": "c5",
+      "num": "+10000000009",
+      "state": "ended",
+      "dir": "out",
+      "hold": false,
+      "tone": "congestion"
+    },
     "unknown": {
       "cid": "c2",
       "num": "+10000000008",

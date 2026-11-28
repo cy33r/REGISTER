@@ -57,6 +57,23 @@ class LocalMutesTest {
         for (s in listOf(Silence.SAMSUNG, Silence.MEDIATEK, Silence.OTHER)) assertTrue("$s", LocalMutes.canMute(s))
     }
 
+    @Test fun qualcommsInCallMusicKeepsTheInjectedVoiceUnderAndroidsMute() {
+        // Issue #13 / #25 (Galaxy A73 / A52s, SM7325): the far end heard itself through the open microphone. With the
+        // in-call music injection Qualcomm's HAL mutes only the mic device; the A73's self-test heard telephony_tx at the
+        // same level with the mute on. Only with the user's "Muted", and checked until it held once.
+        for (s in listOf(Silence.QUALCOMM, Silence.SAMSUNG_QUALCOMM)) {
+            assertTrue("$s", LocalMutes.canMute(s, "telephony_tx"))
+            assertFalse("$s: not with the interception track (Redmi Note 8)", LocalMutes.canMute(s, "intercept"))
+            assertFalse("$s", LocalMutes.canMute(s, "policy_mix"))
+            val p = LocalMutes.manualPlan(s, null, "telephony_tx")
+            assertTrue("$s: Android's mute", p.telecomMic); assertFalse(p.vendorMic); assertTrue("$s: checked", p.check)
+            assertFalse("$s: no check once it held", LocalMutes.manualPlan(s, Memory.OK, "telephony_tx").check)
+            assertEquals("$s: a remembered break wins", LocalMutes.Plan.NONE, LocalMutes.manualPlan(s, Memory.BREAKS_UPLINK, "telephony_tx"))
+            assertEquals("$s: never by default", LocalMutes.Plan.NONE, LocalMutes.autoPlan(s, null))
+        }
+        assertFalse("MediaTek: Android's mute is the whole uplink", LocalMutes.telecomKeepsInCallMusic(Silence.MEDIATEK, "telephony_tx"))
+    }
+
     @Test fun aRememberedSuccessSkipsTheCheck() {
         val p = plan(Silence.OTHER, setting = true, memory = Memory.OK)
         assertTrue(p.telecomMic)

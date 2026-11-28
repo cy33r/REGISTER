@@ -13,6 +13,8 @@ struct CallScreen: Equatable {
     var incoming: Bool
     var connectedAt: Date?
     var sub: Int?
+    /// The call ended busy or failed and its tone plays ("Busy" / "Call failed"); only End is left.
+    var endTone: CallEndTone?
     var muted = false
     var held = false
     var speaker = false
@@ -52,6 +54,9 @@ final class CallController: NSObject {
     private var answeredHere = Set<UUID>()
     private var reportedConnecting = Set<UUID>()
     private var reportedConnected = Set<UUID>()
+    /// Outgoing calls dialed on this iPhone, and those that already gave the "answered" vibration.
+    private var placedHere = Set<UUID>()
+    private var answerCueGiven = Set<UUID>()
     /// CallKit has performed the start action for these outgoing calls (reports before that are dropped).
     private var startPerformed = Set<UUID>()
     /// The user hung up an outgoing call before the Android phone reported it: end it as soon as it shows up.
@@ -61,6 +66,9 @@ final class CallController: NSObject {
     /// Holds we asked for ourselves (a hold done on the Android phone is mirrored into CallKit instead).
     private var holdRequested = Set<UUID>()
     private var dialWatchdog: Task<Void, Never>?
+    /// A call the Android phone reported ended with a busy / failure tone: CallKit keeps it while the tone plays
+    /// (CallEndTone.seconds), then it is reported ended. Ending it here, a new call or the link going stop it at once.
+    private var toneCall: (uuid: UUID, task: Task<Void, Never>)?
 
     init(model: AppModel) {
         self.model = model
@@ -310,6 +318,10 @@ final class CallController: NSObject {
             guard let uuid = uuids.removeValue(forKey: c.cid) else { return }
             cids[uuid] = nil
             info[uuid] = nil
+            if let tone = CallEndTone.play(c.tone, shownHere: true, ringingIncoming: prev == "ringing" && c.isIncoming) {
+                playEndTone(tone, for: uuid)
+                return
+            }
             let reason: CXCallEndedReason = switch (prev, c.cause) {
             case ("ringing", _) where c.isIncoming: .unanswered
             case (_, let cause?) where cause.localizedCaseInsensitiveContains("busy"): .failed
@@ -322,6 +334,7 @@ final class CallController: NSObject {
 
         if uuids[c.cid] == nil {
             if c.isIncoming && c.state == "ringing" {
+                finishEndTone(reportEnd: true)   // a new call rings: the last one's busy tone stops
                 // Report to CallKit before anything else: this is what makes the iPhone ring.
                 let uuid = UUID()
                 bind(c.cid, uuid)
@@ -347,6 +360,7 @@ final class CallController: NSObject {
                 pendingOutgoing = nil
                 dialWatchdog?.cancel()
                 bind(c.cid, uuid)
+                placedHere.insert(uuid)
             } else if let t = cancelledDialAt, Date().timeIntervalSince(t) < 30, cancelledNumber.isEmpty, !c.isIncoming {
                 // The dial the user already hung up on before its number was known: end it on the Android phone instead of
                 // showing it (a call to a known other number, or an incoming one, is never taken for it).
@@ -379,6 +393,11 @@ final class CallController: NSObject {
         case "active":
             model.audio.ringback = false
             reportOutgoingProgress(uuid)
+            if AnswerCue.shouldFire(placedHere: placedHere.contains(uuid), previous: prev, state: c.state,
+                                    alreadyFired: answerCueGiven.contains(uuid)) {
+                answerCueGiven.insert(uuid)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)   // follows the system's haptics setting
+            }
             if c.isIncoming && prev == "ringing" && !answeredHere.contains(uuid) { mirrorAnswer(uuid) }
             if prev == "holding" && holdRequested.remove(uuid) == nil { run(CXSetHeldCallAction(call: uuid, onHold: false), mirrored: true) }
         case "holding":
@@ -394,6 +413,36 @@ final class CallController: NSObject {
     /// The microphone goes out only while a call here is connected (CallUplink).
     private func updateUplink() {
         model.audio.setUplink(open: CallUplink.open(callStates: info.values.map(\.state)))
+    }
+
+    /// The far end was busy or the network failed the call: the tone plays through the call's audio, the call screen
+    /// says so, and CallKit's call ends when the tone is over (as the Phone app does).
+    private func playEndTone(_ tone: CallEndTone, for uuid: UUID) {
+        finishEndTone(reportEnd: true)
+        LinkJournal.shared.add("call ended: \(tone.rawValue) tone for \(Int(CallEndTone.seconds)) s")
+        model.audio.ringback = false
+        model.audio.endTone = tone
+        if var s = model.callScreen, s.uuid == uuid {
+            s.state = "ended"; s.endTone = tone
+            model.callScreen = s
+        }
+        updateUplink()
+        let task = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(CallEndTone.seconds * 1e9))
+            guard let self, !Task.isCancelled, self.toneCall?.uuid == uuid else { return }
+            self.finishEndTone(reportEnd: true)
+        }
+        toneCall = (uuid, task)
+    }
+
+    /// Stops the end tone; `reportEnd`: tell CallKit the call ended (not when CallKit is ending it itself).
+    private func finishEndTone(reportEnd: Bool) {
+        guard let (uuid, task) = toneCall else { return }
+        toneCall = nil
+        task.cancel()
+        model.audio.endTone = nil
+        if reportEnd { reportEnded(uuid, .failed) }
+        cleanup(uuid, flash: false)   // the screen said "Busy" / "Call failed" for 3 s
     }
 
     /// Reports outgoing progress to CallKit once per stage, and only after CallKit performed the start action.
@@ -431,14 +480,14 @@ final class CallController: NSObject {
             if callKitRebuildPending { rebuildCallKit("after the call") }
         }
         answeredHere.remove(uuid); reportedConnecting.remove(uuid); reportedConnected.remove(uuid); mirrored.remove(uuid)
-        startPerformed.remove(uuid)
+        startPerformed.remove(uuid); placedHere.remove(uuid); answerCueGiven.remove(uuid)
         // Close the call screen at once (another call takes it over if there is one).
         if model.callScreen?.uuid == uuid {
             model.callScreen = nextScreen()
             if model.callScreen != nil { routeChanged() }
             if model.callScreen == nil { model.showCallScreen = false; if flash { model.flash(String(localized: "Call ended")) } }
         }
-        if !hasCalls {
+        if !hasCalls && toneCall == nil {
             model.audio.stop()
             speakerWanted = false
             lastLoggedRoute = nil
@@ -488,6 +537,7 @@ final class CallController: NSObject {
 
     /// Link lost: we can no longer control the calls, so end them here (they continue on the Android phone).
     func linkLost() {
+        finishEndTone(reportEnd: true)
         for (_, uuid) in uuids { reportEnded(uuid, .failed) }
         uuids.removeAll(); cids.removeAll(); lastState.removeAll(); info.removeAll(); remote.removeAll()
         if let p = pendingOutgoing { reportEnded(p, .failed); pendingOutgoing = nil }
@@ -539,6 +589,7 @@ final class CallController: NSObject {
         // Keeps *, # and pauses (",") for service codes and extensions; the Android phone dials those as given.
         let clean = DialLink.dialable(number) ?? ""
         guard !clean.isEmpty else { return }
+        finishEndTone(reportEnd: true)   // redialing during the busy tone
         let uuid = UUID()
         pendingSub = sub
         // Show our call screen immediately (CallKit only shows system UI for incoming calls).
@@ -610,6 +661,7 @@ extension CallController: CXProviderDelegate {
     nonisolated func providerDidReset(_ provider: CXProvider) {
         MainActor.assumeIsolatedCompat {
             guard provider === self.provider else { return }
+            if let t = self.toneCall { t.task.cancel(); self.toneCall = nil; self.model.audio.endTone = nil }
             self.uuids.removeAll(); self.cids.removeAll(); self.lastState.removeAll(); self.info.removeAll()
             self.pendingOutgoing = nil; self.mirrored.removeAll(); self.answeredHere.removeAll()
             self.reportedConnecting.removeAll(); self.reportedConnected.removeAll(); self.startPerformed.removeAll()
@@ -706,6 +758,11 @@ extension CallController {
     }
 
     func performEnd(_ uuid: UUID) {
+        if toneCall?.uuid == uuid {
+            // Ended during its busy tone: the Android phone's call is already over; CallKit ends this one now.
+            finishEndTone(reportEnd: false)
+            return
+        }
         LinkJournal.shared.add("end from this iPhone (\(cids[uuid] ?? "no call id yet"))")
         model.audio.ringback = false
         if let cid = cids[uuid] {

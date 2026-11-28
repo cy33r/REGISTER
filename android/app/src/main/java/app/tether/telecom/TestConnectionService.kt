@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.media.ToneGenerator
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -35,7 +36,10 @@ class TestConnectionService : ConnectionService() {
             setAddress(request.address, TelecomManager.PRESENTATION_ALLOWED)
             setDialing()
             current = this
-            android.os.Handler(mainLooper).postDelayed({ setActive() }, 1500)
+            // A fake busy / failed call (debug hook `fake_outgoing … busy`): it rings out a while, then ends with that tone.
+            val end = CallTone.fakeEnd(nextOutgoingEnd.also { nextOutgoingEnd = null })
+            if (end != null) android.os.Handler(mainLooper).postDelayed({ if (state == Connection.STATE_DIALING) finish(end.first, end.second) }, 4000)
+            else android.os.Handler(mainLooper).postDelayed({ setActive() }, 1500)
         }
 
     class FakeConnection : Connection() {
@@ -51,8 +55,9 @@ class TestConnectionService : ConnectionService() {
         override fun onHold() { setOnHold() }
         override fun onUnhold() { setActive() }
         override fun onPlayDtmfTone(c: Char) { Log.i("Tether", "fake line DTMF $c") }
-        fun finish(cause: Int) {
-            setDisconnected(DisconnectCause(cause))
+        /** [tone]: the ToneGenerator tone Android's phone app would play for this end (clients get it as `tone`). */
+        fun finish(cause: Int, tone: Int = CallTone.NONE) {
+            setDisconnected(DisconnectCause(cause, null, null, null, tone))
             destroy()
             if (current === this) current = null
         }
@@ -61,6 +66,8 @@ class TestConnectionService : ConnectionService() {
     companion object {
         const val ID = "tether-test"
         @Volatile var current: FakeConnection? = null
+        /** The next test-line outgoing call ends with this tone instead of being answered ("busy", "congestion", "ended"). */
+        @Volatile var nextOutgoingEnd: String? = null
 
         fun handle(ctx: Context) = PhoneAccountHandle(ComponentName(ctx, TestConnectionService::class.java), ID)
 
@@ -83,7 +90,11 @@ class TestConnectionService : ConnectionService() {
         /** The only numbers the test line dials out to: +10000000001 … +10000000009, exactly. */
         fun dialable(num: String) = Regex("\\+1000000000[1-9]").matches(num)
 
-        fun endCurrent() = current?.finish(DisconnectCause.REMOTE)
+        /** Ends the test-line call as the far end; [tone] ("busy", "congestion", "ended") as the network would end it. */
+        fun endCurrent(tone: String? = null) = current?.let { c ->
+            val end = CallTone.fakeEnd(tone)
+            if (end == null) c.finish(DisconnectCause.REMOTE) else c.finish(end.first, end.second)
+        }
 
         /**
          * An outgoing call on the test line: placed with this self-managed account's handle, so Telecom hands it to

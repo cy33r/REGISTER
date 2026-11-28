@@ -124,18 +124,22 @@ public struct CallInfo: Codable, Equatable, Hashable, Sendable {
     /// The call's audio is on another client (answered / dialed on the Mac or the iPhone); `at` names it.
     public var elsewhere: Bool?
     public var at: String?
+    /// On an ended call: the tone the Android phone's own dialer would play there: "busy", "congestion" (the network
+    /// failed the call) or "ended" (the short call-ended beep). Nil from older Android phone apps and when there is no
+    /// tone. Clients play busy and congestion themselves (``CallEndTone``); "ended" is not played.
+    public var tone: String?
 
     enum CodingKeys: String, CodingKey {
-        case cid, num, name, state, dir, sub, since, cause, hold, elsewhere
+        case cid, num, name, state, dir, sub, since, cause, hold, elsewhere, tone
         case at = "where"
     }
 
     public init(cid: String, num: String, name: String? = nil, state: String, dir: String,
                 sub: Int? = nil, since: Int64? = nil, cause: String? = nil, hold: Bool = false,
-                elsewhere: Bool? = nil, at: String? = nil) {
+                elsewhere: Bool? = nil, at: String? = nil, tone: String? = nil) {
         self.cid = cid; self.num = num; self.name = name; self.state = state; self.dir = dir
         self.sub = sub; self.since = since; self.cause = cause; self.hold = hold
-        self.elsewhere = elsewhere; self.at = at
+        self.elsewhere = elsewhere; self.at = at; self.tone = tone
     }
 
     public var isElsewhere: Bool { elsewhere == true }
@@ -192,17 +196,36 @@ public struct HelperInfo: Codable, Equatable, Sendable {
     /// What call audio this Android version allows: "full" (13+), "fallback" (11-12, best effort), "unavailable"
     /// (8 to 10: calls are controlled from the iPhone but their audio stays on the Android phone). Nil from older builds.
     public var audio: String?
+    /// Why the helper is not running: "wifi" = the Android phone is not on Wi-Fi, so it has no Wireless debugging to
+    /// start the helper with (builds after 1.2.5). Nil while it runs, for other reasons and from older builds.
+    public var why: String?
+    /// True while the helper runs only thanks to Wireless debugging: it stops when the Android phone leaves Wi-Fi
+    /// (USB debugging is off there; builds after 1.2.5). Nil from older builds.
+    public var needsWifi: Bool?
+    /// True while the running helper lives in an adbd that pulling out the USB cable restarts (Samsung, USB debugging on)
+    /// and the Android phone is off Wi-Fi: after an unplug the helper would not come back (builds after 1.2.6).
+    public var stopsOnUnplug: Bool?
+    /// "wifi" while a call rings, dials or goes on whose audio cannot be bridged because the helper is not running and
+    /// cannot start without Wi-Fi (builds after 1.2.6; other values may come and mean the same for the call screen).
+    public var noCallAudio: String?
     public init(state: String, method: String? = nil, capture: String? = nil, up: Bool = false, down: Bool = false,
                 silent: String? = nil, micMute: Bool? = nil, uplink: String? = nil, mic: String? = nil, micPath: String? = nil,
-                audio: String? = nil) {
+                audio: String? = nil, why: String? = nil, needsWifi: Bool? = nil, stopsOnUnplug: Bool? = nil, noCallAudio: String? = nil) {
         self.state = state; self.method = method; self.capture = capture; self.up = up; self.down = down; self.silent = silent
         self.micMute = micMute; self.uplink = uplink; self.mic = mic; self.micPath = micPath; self.audio = audio
+        self.why = why; self.needsWifi = needsWifi; self.stopsOnUnplug = stopsOnUnplug; self.noCallAudio = noCallAudio
     }
 
     /// The Android phone cannot bridge call audio at all (Android 8 to 10).
     public var audioUnavailable: Bool { audio == "unavailable" }
     /// The Android phone's software gave Tether no call audio in a real call (since 1.2.2): calls stay on that phone.
     public var audioBlocked: Bool { audio == "blocked" }
+    /// The helper cannot start because the Android phone has no Wi-Fi (issues #26, #29).
+    public var stoppedWithoutWifi: Bool { state != "running" && why == "wifi" }
+    /// The running helper would stop if the Android phone left Wi-Fi.
+    public var stopsWithoutWifi: Bool { state == "running" && needsWifi == true }
+    /// The running helper stops for good if the USB cable is pulled out (Samsung restarts adb then; no Wi-Fi to restart it).
+    public var stopsOnUsbUnplug: Bool { state == "running" && stopsOnUnplug == true }
 }
 
 public struct StatusBody: Codable, Equatable, Sendable {

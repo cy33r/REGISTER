@@ -77,4 +77,51 @@ final class CallControllerTests: XCTestCase {
         c.linkLost()
         XCTAssertTrue(c.provider !== before, "pending rebuild runs once linkLost clears all calls")
     }
+
+    private func call(_ state: String, tone: String? = nil, dir: String = "out", cid: String = "c1") -> CallInfo {
+        CallInfo(cid: cid, num: "+10000000001", state: state, dir: dir, cause: tone == "busy" ? "BUSY" : nil, hold: true, tone: tone)
+    }
+
+    /// A dialed call that ends busy: the call screen says "Busy" and the tone plays for CallEndTone.seconds, then the
+    /// call ends (CallKit is told after the tone).
+    func testBusyToneKeepsTheCallForThreeSecondsThenEnds() async throws {
+        let c = m.calls
+        c.handle(call("dialing"))
+        c.handle(call("ended", tone: "busy"))
+        XCTAssertEqual(m.callScreen?.state, "ended")
+        XCTAssertEqual(m.callScreen?.endTone, .busy)
+        XCTAssertEqual(m.audio.endTone, .busy)
+        XCTAssertFalse(m.audio.ringback, "the ringback gives way to the tone")
+        try await Task.sleep(nanoseconds: UInt64((CallEndTone.seconds + 0.5) * 1e9))
+        XCTAssertNil(m.callScreen, "the call ended after the tone")
+        XCTAssertNil(m.audio.endTone)
+    }
+
+    func testEndingDuringTheToneStopsItAtOnce() {
+        let c = m.calls
+        c.handle(call("active"))
+        c.handle(call("ended", tone: "congestion"))
+        guard let uuid = m.callScreen?.uuid else { return XCTFail("no call screen") }
+        XCTAssertEqual(m.callScreen?.endTone, .congestion)
+        c.end(uuid)
+        XCTAssertNil(m.callScreen)
+        XCTAssertNil(m.audio.endTone)
+    }
+
+    func testANewCallStopsTheTone() {
+        let c = m.calls
+        c.handle(call("active"))
+        c.handle(call("ended", tone: "busy"))
+        c.handle(call("ringing", dir: "in", cid: "c2"))
+        XCTAssertNil(m.audio.endTone)
+        XCTAssertNotEqual(m.callScreen?.state, "ended")
+    }
+
+    func testNoToneEndsAtOnce() {
+        let c = m.calls
+        c.handle(call("active"))
+        c.handle(call("ended", tone: "ended"))
+        XCTAssertNil(m.callScreen)
+        XCTAssertNil(m.audio.endTone)
+    }
 }

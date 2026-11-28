@@ -15,6 +15,7 @@ import app.tether.audio.PcmuCodec
 import app.tether.audio.VoiceCodec
 import app.tether.client.model.AudioPort
 import app.tether.core.AudioFrame
+import app.tether.core.G711
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
@@ -42,6 +43,9 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
     @Volatile private var wanted = false
     @Volatile var muted = false
     @Volatile private var ringbackOn = false
+    /** The busy / failure tone of a call that just ended ([CallEndTone]), played instead of the far end's audio. */
+    @Volatile var endTone: CallEndTone? = null
+        set(v) { field = v; if (v != null) ringbackOn = false }
     @Volatile private var heardRemote = false
     private var seq = 0
     private var lastSeq = -1
@@ -54,6 +58,8 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
     // Statistics (logged at stop, in the Link log).
     @Volatile private var frames = 0
     @Volatile private var lost = 0
+    /** Of [frames], those that held the far end's voice ([SpeechLevel]): a "no sound" report shows whether speech came. */
+    @Volatile private var speechFrames = 0
     private var lastArrival = 0L
     private var jitterSum = 0.0
     private var worstGap = 0.0
@@ -90,6 +96,9 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
         log("audio start: ${c.name} @ ${c.rate} Hz")
         // A different rate needs a new player and recorder.
         if (running && c.rate != playRate) { stopLocked(); startLocked() }
+        // A new audio.start mid-call (a relink: the Android phone restarts the frame numbers at 0) is a new stream: what
+        // is queued is from before the gap, and the arrival statistics start again.
+        else if (running && frames > 0) playout.reset()
     }
 
     override fun remoteStopped() = synchronized(lock) { codec?.release(); codec = null }
@@ -99,7 +108,7 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
         wanted = false
         if (running) stopLocked()
         codec?.release(); codec = null
-        ringbackOn = false; muted = false; seq = 0
+        ringbackOn = false; muted = false; seq = 0; endTone = null
         gate.reset(); captureSilent = false; recorderFailed = false
     }
 
@@ -111,8 +120,17 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
     }
 
     private fun receive(f: AudioFrame, now: Long) {
-        val k = codec ?: return
+        var k = codec ?: return
         if (!running || f.codec != k.id) return
+        // µ-law frames say their rate by their length ([DownlinkRate]): the Android phone 1.2.6 sent 16 kHz as "8 kHz"
+        // after a reconnect. Play them, and send the microphone, at the rate they carry.
+        val carried = DownlinkRate.of(f.codec, k.rate, f.payload.size)
+        if (carried != k.rate) {
+            log("call audio: µ-law frames of ${f.payload.size} bytes carry $carried Hz (announced ${k.rate} Hz): playing them at $carried Hz")
+            k = PcmuAt(carried)
+            codec = k
+            stopLocked(); startLocked()
+        }
         var missing = 0
         if (lastSeq >= 0) {
             val gap = ((f.seq - lastSeq) and 0xffff).let { if (it > 0x8000) it - 0x10000 else it }
@@ -131,6 +149,7 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
         var filled = 0
         if (missing in 1..2) repeat(missing) { k.conceal()?.let { plc -> if (sameRate) buffer.push(plc, at = now, concealed = true); filled++ } }
         val pcm = k.decode(f.payload) ?: return
+        if (SpeechLevel.isSpeech(pcm)) speechFrames++
         if (ringback) {
             // Network ringback or the answer is audible: stop the local tone.
             var e = 0.0
@@ -147,7 +166,7 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
         playRate = rate
         val buffer = PlayoutBuffer(rate)
         playout = buffer
-        frames = 0; lost = 0; lastArrival = 0; jitterSum = 0.0; worstGap = 0.0
+        frames = 0; lost = 0; speechFrames = 0; lastArrival = 0; jitterSum = 0.0; worstGap = 0.0
         running = true
         val tenMs = rate / 100
         playThread = Thread({
@@ -167,6 +186,7 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
             track.play()
             val f = FloatArray(tenMs); val out = ShortArray(tenMs)
             var phase = 0.0; var clock = 0
+            var toneGen: CallEndToneGenerator? = null
             try {
                 while (running && playout === buffer) {
                     buffer.pull(f, tenMs)
@@ -180,6 +200,10 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
                             clock++
                         }
                     } else clock = 0
+                    // A call that ended busy / failed: its tone replaces everything else (the far end is gone).
+                    val tone = endTone
+                    if (tone == null) toneGen = null
+                    else { if (toneGen?.tone != tone) toneGen = CallEndToneGenerator(tone, rate); toneGen?.fill(f, tenMs) }
                     for (i in 0 until tenMs) out[i] = (f[i] * 32767f).coerceIn(-32768f, 32767f).toInt().toShort()
                     track.write(out, 0, tenMs)   // blocking: paces this thread
                 }
@@ -251,9 +275,17 @@ class CallAudio(private val send: (AudioFrame) -> Boolean, private val log: (Str
         val ms = 1000.0 / playRate
         lastStats = String.format(Locale.ROOT, "playout delay %.0f ms (target %.0f, arrival spread asks %.0f), underruns %d, " +
             "concealed %.0f ms (%d frames by the decoder), trimmed %.0f ms (speech %.0f ms), added %.0f ms, lost %d of %d frames, " +
-            "arrival jitter %.1f ms, worst gap %.0f ms, drift %.0f ppm",
+            "speech %d frames, arrival jitter %.1f ms, worst gap %.0f ms, drift %.0f ppm",
             b.meanBuffered * ms, b.target * ms, b.jitterFloor * ms, b.underruns, b.concealedSamples * ms, b.concealedFrames,
-            b.trimmed * ms, b.speechTrimmed * ms, b.inserted * ms, lost, frames, if (frames > 1) jitterSum / (frames - 1) else 0.0, worstGap, b.driftPpm)
+            b.trimmed * ms, b.speechTrimmed * ms, b.inserted * ms, lost, frames, speechFrames, if (frames > 1) jitterSum / (frames - 1) else 0.0, worstGap, b.driftPpm)
         log("call audio: $lastStats")
     }
+}
+
+/** G.711 µ-law at [rate]: 8 kHz as meant, 16 kHz when the Android phone sends µ-law at its helper's rate ([DownlinkRate]). */
+private class PcmuAt(override val rate: Int) : VoiceCodec {
+    override val id = AudioFrame.PCMU
+    override val name = "pcmu"
+    override fun encode(pcm: ShortArray) = listOf(G711.encode(pcm))
+    override fun decode(frame: ByteArray) = G711.decode(frame)
 }

@@ -3,6 +3,7 @@ package app.tether.core
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -163,9 +164,21 @@ class ContractTest {
             val o = JSONObject(v.toString()).apply { remove("elsewhere"); remove("where") }
             val c = CallInfo(o.getString("cid"), o.getString("num"), o.optString("name").ifEmpty { null }, o.getString("state"),
                 o.getString("dir"), if (o.has("sub")) o.getInt("sub") else null, if (o.has("since")) o.getLong("since") else null,
-                o.optString("cause").ifEmpty { null }, o.getBoolean("hold"))
+                o.optString("cause").ifEmpty { null }, o.getBoolean("hold"), o.optString("tone").ifEmpty { null })
             assertSame("call.state/$name", o, c.json())
         }
+    }
+
+    @Test fun toneOnlyWithAnEndedCall() {
+        val busy = variants("call.state").getValue("busy")
+        assertEquals("busy", busy.getString("tone"))
+        assertEquals("congestion", variants("call.state").getValue("failed").getString("tone"))
+        assertFalse("an ended call without a tone (older builds, the test line)", variants("call.state").getValue("ended").has("tone"))
+        // Never on a call that is still going, whatever the caller passes.
+        assertFalse(CallInfo("c1", "+10000000007", null, "active", "out", null, null, null, false, "busy").json().has("tone"))
+        // The constructor without a tone (1.2.6 and older) still builds the same body.
+        assertSame("old constructor", CallInfo("c3", "+10000000009", null, "ended", "out", null, null, "remote", false).json(),
+            variants("call.state").getValue("ended").let { JSONObject(it.toString()) })
     }
 
     @Test fun idRangesMatchSyncIdsFixture() {

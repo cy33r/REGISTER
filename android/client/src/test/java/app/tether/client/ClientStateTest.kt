@@ -475,6 +475,32 @@ class ClientStateTest {
         assertNull("nothing pending without a link", s.netPending)
     }
 
+    @Test fun networkStateMustBeRefreshedAfterReconnect() {
+        s.refreshNet()
+        rx(T.STATUS, JSONObject())
+        rx(T.NET_STATE, JSONObject().put("data", true))
+        assertTrue(s.hasLiveStatus)
+        assertEquals(true, s.net?.optBoolean("data"))
+        s.linkDown()
+        assertFalse(s.hasLiveStatus)
+        assertNull(s.net)
+        s.refreshNet()
+        assertEquals(2, link.sent.count { it.t == T.NET_GET })
+    }
+
+    @Test fun anotherNetworkReplyAndOldTimeoutDoNotClearNewPendingRequest() {
+        s.setNet("data", false)
+        val first = link.last(T.NET_SET).id
+        val firstTimeout = fx.timers.single().second
+        rx(T.NET_STATE, JSONObject().put("data", false), re = first)
+        s.setNet("data", true)
+        rx(T.NET_STATE, JSONObject().put("data", false), re = first)
+        firstTimeout()
+        assertEquals("data", s.netPending)
+        rx(T.NET_STATE, JSONObject().put("data", true), re = link.last(T.NET_SET).id)
+        assertNull(s.netPending)
+    }
+
     @Test fun netRefreshAtMostEveryTenSeconds() {
         s.refreshNet(); s.refreshNet()
         fx.clock += 10_000; s.refreshNet()

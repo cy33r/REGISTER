@@ -99,6 +99,12 @@ struct InCallView: View {
             CallStatusText(call: call)
                 .font(.system(size: 17))
                 .opacity(0.75)
+            if CallAudioNotice.forCall(state: call.state, helper: model.status?.helper) == .needsWifi {
+                // The Android phone's audio helper is down and cannot start without Wi-Fi: the call has no audio at all.
+                Label("No call audio: turn on Wi-Fi on the Android phone for a moment.", systemImage: "speaker.slash.fill")
+                    .font(.footnote.weight(.medium)).foregroundStyle(.yellow)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true).padding(.top, 4)
+            }
             if let w = model.micWarning, call.state != "ended" {
                 // The other side cannot hear this iPhone (#14): say it where the call is, not only in the Link tab.
                 Label(Microphone.text(w), systemImage: "mic.slash.fill")
@@ -160,9 +166,10 @@ struct InCallView: View {
             EmptyView()
         } else {
             ZStack {
+                // During a busy / failure tone End stays: it stops the tone at once.
                 CallButton(color: .red, icon: "phone.down.fill") { model.calls.end(call.uuid) }
-                    .disabled(call.state == "ended")
-                    .opacity(call.state == "ended" ? 0.5 : 1)
+                    .disabled(call.state == "ended" && call.endTone == nil)
+                    .opacity(call.state == "ended" && call.endTone == nil ? 0.5 : 1)
                 if keypad {
                     HStack {
                         Spacer()
@@ -189,7 +196,12 @@ struct CallStatusText: View {
         case "dialing", "connecting": String(localized: "calling…")
         case "ringing": String(localized: "Incoming call")
         case "holding": String(localized: "On hold")
-        case "ended": String(localized: "Call ended")
+        case "ended":
+            switch call.endTone {
+            case .busy: String(localized: "Busy")
+            case .congestion: String(localized: "Call failed")
+            case nil: String(localized: "Call ended")
+            }
         default:
             if let t = call.connectedAt {
                 Fa.duration(Int(now.timeIntervalSince(t)))

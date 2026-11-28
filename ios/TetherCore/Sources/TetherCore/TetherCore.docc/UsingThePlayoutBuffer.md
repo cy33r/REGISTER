@@ -30,7 +30,13 @@ playout.push(decoder.decode(frame.payload))
 let real = playout.pull(into: buffer, count: frameCount)   // Float samples, -1…1; returns how many were real audio
 ```
 
-When the call ends, call ``PlayoutBuffer/reset()``.
+When the call ends, call ``PlayoutBuffer/reset()``; also when a new `audio.start` arrives during a call (after a
+relink the phone numbers its frames from 0 again: what is queued is stale and the arrival statistics start afresh). A
+gap without frames longer than ``PlayoutBuffer/restartGapMs`` restarts the statistics by itself
+(``PlayoutBuffer/arrivalRestarts`` counts both).
+
+Decode G.711 frames at the rate they carry, ``DownlinkRate/of(codec:announced:frameBytes:)``: every frame is 20 ms, and
+the phone app 1.2.6 sent 16 kHz µ-law announced as 8 kHz after a mid-call reconnect.
 
 ### Watching it
 

@@ -162,7 +162,7 @@ class PlayoutLongGapTest {
         val r = run(tethering(3000, 5, stalls = listOf(20_000.0 to 10_000.0)), talk(3000, 5))
         println("[trace] " + report("10 s stall", r))
         assertTrue(r.maxDelayMs <= PlayoutBuffer.MAX_BACKLOG_SECONDS * 1000 + 25)
-        assertEquals("10 s stall: concealed 456 ms, underruns 2, drained 10056 ms (speech 4120 ms), added 0 ms, delay mean 67 max 790 ms, 0.5 s above 250 ms", report("10 s stall", r))
+        assertEquals("10 s stall: concealed 460 ms, underruns 2, drained 10060 ms (speech 4120 ms), added 0 ms, delay mean 67 max 790 ms, 0.5 s above 250 ms", report("10 s stall", r))
     }
 
     /** A stall's burst is no measure of the link's spread: the target is not held at its maximum after it. */

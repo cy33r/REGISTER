@@ -24,4 +24,20 @@ object AudioRestart {
         val errors = info.optJSONArray("errors") ?: return false
         return (0 until errors.length()).any { val e = errors.optString(it); e.contains(":intercept ") && e.contains("not available in mode") }
     }
+
+    /**
+     * The call's downlink cannot be captured at all: every capture method failed in the call's own audio mode (the start
+     * INFO says capture none), the call is active, [waitMs] passed since that INFO (the same wait [wanted] gives the
+     * interception API) and no restart is coming ([restartWanted]: [wanted] now). Then the client would hear nothing
+     * while the phone's own earpiece stays muted, so the call goes back to the phone like one whose capture reads only
+     * zeros ("blocked"). Realme X (Android 11, issue #26, 2026-11-28): voice_downlink, voice_call and telephony_rx all
+     * refused with "startRecording failed" in every call, the earpiece muted, and the user heard nothing anywhere.
+     * Not on the test line (its paths say nothing about real calls), nor before Android 11 (no call audio there anyway).
+     */
+    fun captureNone(sdk: Int, info: JSONObject?, testLine: Boolean, callActive: Boolean, msSinceInfo: Long, restartWanted: Boolean,
+                    waitMs: Long = 3000): Boolean {
+        if (info == null || testLine || sdk < 30 || !callActive || msSinceInfo < waitMs || restartWanted) return false
+        val capture = info.optString("capture")
+        return capture.isEmpty() || capture == "null"
+    }
 }

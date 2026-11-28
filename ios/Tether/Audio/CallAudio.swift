@@ -16,7 +16,9 @@ extension VoiceCoder { func conceal() -> [Int16]? { nil } }
 
 final class PcmuCoder: VoiceCoder {
     let id = AudioFrame.Codec.pcmu
-    let rate = 8000.0
+    /// 8 kHz as G.711 is meant; 16 kHz when the Android phone sends µ-law at its helper's rate (DownlinkRate).
+    let rate: Double
+    init(rate: Double = 8000) { self.rate = rate }
     func encode(_ pcm: [Int16]) -> Data? { G711.encode(pcm) }
     func decode(_ data: Data) -> [Int16] { G711.decode(data) }
 }
@@ -130,6 +132,9 @@ final class CallAudio: @unchecked Sendable {
     private func flags<T>(_ body: () -> T) -> T { flagsLock.withLock(body) }
     private var _muted = false
     private var _ringback = false
+    /// The busy / failure tone of a call that just ended (CallEndTone), played instead of the far end's audio.
+    private var _endTone: CallEndTone?
+    private var endToneGen: CallEndToneGenerator?
     private var ringPhase = 0.0
     private var ringClock = 0
     private var heardRemote = false
@@ -141,7 +146,9 @@ final class CallAudio: @unchecked Sendable {
         /// Mean playout delay the listener had (the buffer's level), and quiet audio added to reach the target.
         var delayMs = 0.0; var addedMs = 0.0
         /// Frame arrival spacing over the link: mean |gap − 20 ms| and the worst gap seen (BLE jitter).
-        var jitterMs = 0.0; var worstGapMs = 0.0; var frames = 0 }
+        var jitterMs = 0.0; var worstGapMs = 0.0; var frames = 0
+        /// Of `frames`, those that held the far end's voice (SpeechLevel): a "no sound" report shows whether speech came.
+        var speechFrames = 0 }
     private var lastArrival: UInt64 = 0
     private var jitterSum = 0.0
     /// Debug (-TetherEcho): send every received frame straight back with the same sequence number instead of
@@ -202,6 +209,13 @@ final class CallAudio: @unchecked Sendable {
         }
     }
 
+    /// The tone of a call that ended busy or failed (CallController keeps the call for CallEndTone.seconds meanwhile);
+    /// nil stops it at once.
+    var endTone: CallEndTone? {
+        get { flags { _endTone } }
+        set { flags { _endTone = newValue; endToneGen = nil; if newValue != nil { _ringback = false } } }
+    }
+
     /// Our ringback should sound now (dialing, and nothing audible from the far end yet).
     var ringbackAudible: Bool { flags { _ringback && !heardRemote } }
 
@@ -242,6 +256,9 @@ final class CallAudio: @unchecked Sendable {
             self.coder = start.codec == "opus" ? (OpusCoder(rate: Double(start.rate), bitrate: start.bitrate ?? 32000) ?? PcmuCoder()) : PcmuCoder()
             self.lastSeq = nil
             if self.sessionActive {
+                // A new audio.start mid-call (a relink: the Android phone restarts the frame numbers at 0) is a new stream:
+                // what is queued is from before the gap, and the arrival statistics start again.
+                if self.running && (self.coder?.rate ?? 16000) == self.playRate && self.stats.frames > 0 { self.playout.reset() }
                 if self.running && (self.coder?.rate ?? 16000) != self.playRate { self.stopLocked() }
                 self.startLocked()
                 self.observeSessionRoute()   // a next call on a still-active session: stop() removed it
@@ -271,6 +288,7 @@ final class CallAudio: @unchecked Sendable {
     @MainActor func stop() {
         q.async {
             self.unobserveSessionRoute(); self.stopLocked(); self.coder = nil; self.remote = nil; self.ringback = false; self.muted = false; self.seq = 0
+            self.endTone = nil
             self.uplinkOpen = false; self.heldBack = 0
             self.micSamples = 0; self.micHeard = false; self.micSilentReported = false
         }
@@ -314,7 +332,10 @@ final class CallAudio: @unchecked Sendable {
             buffer.pull(into: out, count: n)
             // While dialing, the downlink is often silence (on VoLTE the ringback is played by the phone itself,
             // not sent): play our own ringback until real audio (network ringback, the answer) is heard.
-            if let self, self.ringbackAudible { self.fillRingback(out, count: n, rate: rate) }
+            if let self {
+                if self.ringbackAudible { self.fillRingback(out, count: n, rate: rate) }
+                self.fillEndTone(out, count: n, rate: rate)
+            }
             return noErr
         }
         // Capture: the sink node gets each I/O buffer (≈10 ms). It only copies channel 0 into a ring;
@@ -504,15 +525,27 @@ final class CallAudio: @unchecked Sendable {
         let spreadMs = Double(playout.jitterFloor) / playRate * 1000
         if playout.concealedFrames > 0 { NSLog("[audio] %d lost frames filled by Opus concealment", playout.concealedFrames) }
         if !micHeard, Double(micSamples) >= 2 * (captureMono?.sampleRate ?? 48000) { LinkJournal.shared.add("call audio: the microphone captured only silence in this call") }
-        LinkJournal.shared.add(String(format: "call audio: link round trip %@, playout delay %.0f ms (target %.0f, arrival spread asks %.0f), concealed %.0f ms, underruns %d, drained %.0f ms (speech %.0f ms), added %.0f ms, lost %d of %d frames, arrival jitter %.1f ms, worst gap %.0f ms, drift %.0f ppm, io %.1f ms, out latency %.1f ms",
+        LinkJournal.shared.add(String(format: "call audio: link round trip %@, playout delay %.0f ms (target %.0f, arrival spread asks %.0f), concealed %.0f ms, underruns %d, drained %.0f ms (speech %.0f ms), added %.0f ms, lost %d of %d frames, speech %d frames, arrival jitter %.1f ms, worst gap %.0f ms, drift %.0f ppm, io %.1f ms, out latency %.1f ms",
                                       rtt, snapshot.delayMs, snapshot.playoutMs, spreadMs, concealedMs, snapshot.underruns, snapshot.trimmedMs,
                                       Double(playout.speechTrimmed) / playRate * 1000, snapshot.addedMs, snapshot.lost,
-                                      snapshot.frames, snapshot.jitterMs, snapshot.worstGapMs, playout.driftPpm, snapshot.ioBufferMs, snapshot.outputLatencyMs))
+                                      snapshot.frames, snapshot.speechFrames, snapshot.jitterMs, snapshot.worstGapMs, playout.driftPpm, snapshot.ioBufferMs, snapshot.outputLatencyMs))
         DispatchQueue.main.async { MainActor.assumeIsolatedCompat { AppModel.shared.lastAudioStats = snapshot } }
     }
 
     private func receive(_ f: AudioFrame, at now: UInt64) {
-        guard running, let coder, f.codec == coder.id else { return }
+        guard running, var coder, f.codec == coder.id else { return }
+        // µ-law frames say their rate by their length (DownlinkRate): the Android phone 1.2.6 sent 16 kHz as "8 kHz" after
+        // a reconnect. Play them, and send the microphone, at the rate they carry.
+        let carried = Double(DownlinkRate.of(codec: f.codec, announced: Int(coder.rate), frameBytes: f.payload.count))
+        if carried != coder.rate {
+            LinkJournal.shared.add(String(format: "call audio: µ-law frames of %d bytes carry %.0f Hz (announced %.0f Hz): playing them at %.0f Hz",
+                                          f.payload.count, carried, coder.rate, carried))
+            coder = PcmuCoder(rate: carried)
+            self.coder = coder
+            stopLocked(rebuild: true)
+            startLocked(rebuild: true)
+            guard running else { return }
+        }
         var missing = 0
         if let last = lastSeq {
             let gap = Int(Int16(bitPattern: f.seq &- last))
@@ -535,6 +568,7 @@ final class CallAudio: @unchecked Sendable {
             for _ in 0..<missing { if let plc = coder.conceal() { playout.push(plc, at: now, concealed: true); filled += 1 } }
         }
         let pcm = coder.decode(f.payload)
+        if SpeechLevel.isSpeech(pcm) { stats.speechFrames += 1 }
         if Self.echoTest, let back = coder.encode(pcm) {
             link.sendAudio(AudioFrame(codec: coder.id, seq: f.seq, payload: back))
         }
@@ -612,6 +646,15 @@ final class CallAudio: @unchecked Sendable {
         NSLog("[audio] trace: level %.0f ms (mean %.0f), target %.0f, floor %.0f, drained %.0f, added %.0f, concealed %.0f ms; %@",
               ms(playout.buffered), playout.meanBuffered / playRate * 1000, ms(playout.target), ms(playout.jitterFloor),
               ms(playout.trimmed), ms(playout.inserted), ms(playout.concealedSamples), playout.arrivalSummary())
+    }
+
+    /// Render thread: the end tone replaces whatever else this buffer held (the call is over; the far end is gone).
+    private func fillEndTone(_ out: UnsafeMutablePointer<Float>, count: Int, rate: Double) {
+        flagsLock.withLock {
+            guard let tone = _endTone else { return }
+            if endToneGen == nil { endToneGen = CallEndToneGenerator(tone: tone, rate: Int(rate)) }   // a value type: no allocation
+            endToneGen!.fill(out, count: count)
+        }
     }
 
     /// 425 Hz, 1 s on / 4 s off (the ITU-recommended ringback used by Iranian and most European networks).

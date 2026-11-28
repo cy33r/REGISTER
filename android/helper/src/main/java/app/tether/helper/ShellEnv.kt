@@ -49,7 +49,19 @@ object ShellEnv {
             log("ConfigurationController workaround skipped: $t")
         }
         val system = atClass.getDeclaredMethod("getSystemContext").apply { isAccessible = true }.invoke(thread) as Context
-        ctx = ShellContext(system)
+        val shell = ShellContext(system)
+        ctx = shell
+        // Some vendors' audio code asks ActivityThread.currentApplication(), which is null in app_process: on a Honor 200
+        // (MagicOS 10, Android 16, issue #37) every capture and every self-test track failed with a bare
+        // NullPointerException. An Application on our shell context answers it; nothing else reads it here.
+        try {
+            val app = android.app.Application()
+            android.content.ContextWrapper::class.java.getDeclaredMethod("attachBaseContext", Context::class.java)
+                .apply { isAccessible = true }.invoke(app, shell)
+            atClass.getDeclaredField("mInitialApplication").apply { isAccessible = true }.set(thread, app)
+        } catch (t: Throwable) {
+            log("Application workaround skipped: $t")
+        }
     }
 
     val context: Context get() = ctx ?: run { init(); ctx!! }

@@ -52,6 +52,7 @@ class LinkService : Service() {
             addAction("android.net.conn.TETHER_STATE_CHANGED")
         })
         registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        runCatching { registerReceiver(usbReceiver, IntentFilter(Adb.USB_STATE)) }
         watchWifi()
         runCatching { TestConnectionService.register(this) }
     }
@@ -93,6 +94,7 @@ class LinkService : Service() {
         app.hub.removeListener(uiListener)
         runCatching { unregisterReceiver(btReceiver) }
         runCatching { unregisterReceiver(batteryReceiver) }
+        runCatching { unregisterReceiver(usbReceiver) }
         runCatching { unregisterReceiver(aclReceiver) }
         LinkLog.add("service stopped")
         ble?.stop()
@@ -152,21 +154,52 @@ class LinkService : Service() {
         }
     }
 
-    /** After a reboot, Wireless debugging is off until Wi-Fi is up; turn it back on and restart the helper. */
+    /**
+     * The USB cable went in or out: in the link log (Samsung restarts adbd, and the helper with it, when it goes out:
+     * HelperLife), and clients learn at once whether an unplug would now stop call audio (status `helper.stopsOnUnplug`).
+     */
+    private var lastUsb: Boolean? = null
+    private val usbReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) {
+            val now = i.getBooleanExtra("connected", false)
+            val before = lastUsb
+            lastUsb = now
+            if (before == null || before == now) return   // the sticky state at registration, or no change
+            LinkLog.add(if (now) "USB cable connected" else "USB cable unplugged" + (if (Adb.samsung) " (Samsung restarts adb now: the audio helper stops with it)" else ""))
+            Thread { Thread.sleep(2000); app.hub.pushStatus() }.start()
+        }
+    }
+
+    /**
+     * Wi-Fi is back: start the helper at once. After a reboot Wireless debugging is off until Wi-Fi is up (turned back
+     * on here); after Samsung restarted adbd on a USB unplug with Wi-Fi off, the helper is gone and only Wi-Fi can bring
+     * it back (HelperLife): a few seconds of it are enough, so this never waits for the launch back-off of the failed
+     * attempts made without Wi-Fi, and tries again while Wi-Fi stays.
+     */
     private fun watchWifi() {
         val cm = getSystemService(ConnectivityManager::class.java)
         val req = NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build()
         cm.registerNetworkCallback(req, object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
-                if (!Adb.hasSecureSettings(this@LinkService)) return
                 Thread {
-                    val wasOn = Settings.Global.getInt(contentResolver, "adb_wifi_enabled", 0) == 1
-                    Adb.enableWirelessDebugging(this@LinkService)
-                    if (!wasOn) Thread.sleep(6000) // let adbd bring its TLS service up
-                    if (app.prefs.getBoolean("adb_paired", false)) app.hub.helper.ensureRunning()
+                    if (Adb.hasSecureSettings(this@LinkService)) {
+                        val wasOn = Settings.Global.getInt(contentResolver, "adb_wifi_enabled", 0) == 1
+                        Adb.enableWirelessDebugging(this@LinkService)
+                        if (!wasOn) Thread.sleep(6000) // let adbd bring its TLS service up
+                    }
+                    if (app.prefs.getBoolean("adb_paired", false)) {
+                        for (attempt in 1..3) {
+                            val err = app.hub.helper.ensureRunning() ?: break
+                            LinkLog.add("audio helper not started on Wi-Fi (attempt $attempt): $err")
+                            if (!Adb.onWifi(this@LinkService)) break
+                            Thread.sleep(2000)
+                        }
+                    }
                     app.hub.pushStatus()
                 }.start()
             }
+            // Clients learn at once that the helper now cannot start (status helper.why, issues #26, #29).
+            override fun onLost(network: Network) { Thread { Thread.sleep(1500); app.hub.pushStatus() }.start() }
         })
     }
 

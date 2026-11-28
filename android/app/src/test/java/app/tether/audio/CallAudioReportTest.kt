@@ -33,6 +33,25 @@ class CallAudioReportTest {
         assertTrue(line, line.contains("errors: local mute x"))
     }
 
+    @Test fun theIphonesCopyOfTheCallFiguresSaysWhichInjectionAndWhy() {
+        // Issue #14: the iPhone's report said only "method -" (no injection), nothing about why.
+        val none = JSONObject().put("inject", JSONObject.NULL).put("injectWhy", "none opened: inject:intercept IllegalStateException: x; inject:telephony_tx no telephony output device")
+        assertEquals("; inject NONE (none opened: inject:intercept IllegalStateException: x; inject:telephony_tx no telephony output device)", CallAudioReport.injectSummary(none))
+        val switched = JSONObject().put("inject", "policy_mix").put("injectWhy", "policy_mix (routed 18:Telephony)").put("injectSwitched", "telephony_tx → policy_mix: its play position stood still")
+        assertEquals("; inject policy_mix (policy_mix (routed 18:Telephony)); switched telephony_tx → policy_mix: its play position stood still", CallAudioReport.injectSummary(switched))
+        assertEquals("an older helper says nothing", "", CallAudioReport.injectSummary(JSONObject()))
+    }
+
+    @Test fun thePathLineSaysWhyAndTheEarpieceVolume() {
+        val info = JSONObject().put("capture", "intercept").put("inject", "telephony_tx").put("routed", "18:SM-A736B").put("routedToCall", true)
+            .put("errors", JSONArray()).put("uplink", uplink("off", false)).put("earpiece", "voice stream muted")
+            .put("voiceVolume", JSONObject().put("index", 1).put("min", 1).put("max", 8).put("muted", true))
+            .put("injectSwitched", "intercept → telephony_tx: its play position stood still")
+        val line = CallAudioReport.pathLine(info, setting = false, memory = null)
+        assertTrue(line, line.contains("earpiece voice stream muted (voice-call volume 1 of 1–8, muted)"))
+        assertTrue(line, line.contains("injection switched during the call: intercept → telephony_tx"))
+    }
+
     @Test fun aSkippedInterceptionRouteIsSaid() {
         val info = JSONObject().put("capture", "intercept").put("inject", "telephony_tx").put("routed", "18:Redmi Note 8")
             .put("routedToCall", true).put("interceptInjectDead", true).put("errors", JSONArray()).put("uplink", uplink("off", false))
@@ -86,6 +105,15 @@ class CallAudioReportTest {
         assertNull(CallAudioReport.silentIphone(JSONObject().put("uplinkFrames", 900).put("uplinkSpeechFrames", 12)))
         assertNull("a very short call", CallAudioReport.silentIphone(JSONObject().put("uplinkFrames", 100).put("uplinkSpeechFrames", 0)))
         assertNull("an older helper", CallAudioReport.silentIphone(JSONObject().put("uplinkFrames", 900)))
+    }
+
+    @Test fun aDownlinkWithoutSpeechIsFlagged() {
+        // 2026-11-28 13:11:58: "no sound", yet the phone sent 579 frames down and the iPhone played 577; nothing said
+        // whether they held the far end's voice.
+        assertTrue(CallAudioReport.silentFarEnd(JSONObject().put("downlinkSpeechFrames", 0), downFrames = 579)!!.contains("without any speech"))
+        assertNull(CallAudioReport.silentFarEnd(JSONObject().put("downlinkSpeechFrames", 140), downFrames = 579))
+        assertNull("a very short call", CallAudioReport.silentFarEnd(JSONObject().put("downlinkSpeechFrames", 0), downFrames = 100))
+        assertNull("an older helper", CallAudioReport.silentFarEnd(JSONObject(), downFrames = 579))
     }
 
     private fun mic(state: String, verdict: String? = null, note: String = "") = JSONObject().put("setting", "auto").put("path", if (state == "on") "off" else "open")

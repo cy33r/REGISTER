@@ -1,8 +1,9 @@
 #!/bin/sh
 # Sends a debug command to the Tether app (adb-only hook) and prints its answer.
 #   tools/dbg.sh state | pair_code | loopback | probe | helper_start | helper_quit | helper_cmd
-#   tools/dbg.sh fake_incoming [ring-iphone] [num] | fake_outgoing [ring-iphone] | fake_end | dryrun_on | dryrun_off
-#     (test line only; ring-iphone lets the ring / call reach a linked iPhone on purpose)
+#   tools/dbg.sh fake_incoming [ring-iphone] [num] | fake_outgoing [ring-iphone] [busy|congestion] | fake_end [busy|congestion|ended] | dryrun_on | dryrun_off
+#     (test line only; ring-iphone lets the ring / call reach a linked iPhone on purpose; busy / congestion: the call ends
+#     with that `tone` like a busy or failed number, fake_outgoing after 4 s of dialing)
 #   tools/dbg.sh loopback_call [answer|decline|remote|outgoing|selftest|during-sync] | loopback_handover   (test line only)
 #   tools/dbg.sh adb_pair <code> | adb_pair_clear | adb_shell "<cmd>"
 #   tools/dbg.sh net [data|hotspot|bt on|off] | airplane on|off | share on|off|loopback|noloopback|state
@@ -25,7 +26,8 @@ case "$cmd" in
   adb_pair) extra="--es code $1";;
   adb_shell) extra="--es sh '$1'";;
   fake_incoming) [ "$1" = "ring-iphone" ] && { extra="--es allow iphone"; shift; }; [ -n "$1" ] && extra="$extra --es num $1";;
-  fake_outgoing) [ "$1" = "ring-iphone" ] && extra="--es allow iphone";;
+  fake_outgoing) [ "$1" = "ring-iphone" ] && { extra="--es allow iphone"; shift; }; [ -n "$1" ] && extra="$extra --es tone $1";;
+  fake_end) [ -n "$1" ] && extra="--es tone $1";;
   net) [ -n "$1" ] && extra="--es what $1 --es on ${2:-on}";;
   net_datasub) extra="--es sub $1";;
   share) extra="--es on ${1:-state}";;

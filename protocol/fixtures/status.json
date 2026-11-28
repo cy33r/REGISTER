@@ -43,7 +43,8 @@
         "uplink": "ok",
         "mic": "auto",
         "micPath": "off",
-        "audio": "full"
+        "audio": "full",
+        "needsWifi": true
       },
       "wifi": true,
       "adbWifi": true,
@@ -143,7 +144,8 @@
         "uplink": "ok",
         "mic": "auto",
         "micPath": "off",
-        "audio": "full"
+        "audio": "full",
+        "needsWifi": true
       },
       "wifi": true,
       "adbWifi": true,
@@ -182,6 +184,79 @@
       "futureField": {
         "x": 1
       }
+    },
+    "nowifi": {
+      "device": "Test Phone",
+      "battery": 50,
+      "charging": false,
+      "sims": [
+        {
+          "slot": 1,
+          "sub": 2,
+          "name": "SIM 2",
+          "carrier": "Test Carrier",
+          "signal": 0
+        }
+      ],
+      "dialer": false,
+      "helper": {
+        "state": "stopped",
+        "up": false,
+        "down": false,
+        "audio": "full",
+        "why": "wifi"
+      },
+      "wifi": false,
+      "adbWifi": false
+    },
+    "unplug": {
+      "device": "Test Phone",
+      "battery": 50,
+      "charging": true,
+      "sims": [
+        {
+          "slot": 1,
+          "sub": 2,
+          "name": "SIM 2",
+          "carrier": "Test Carrier",
+          "signal": 3
+        }
+      ],
+      "dialer": true,
+      "helper": {
+        "state": "running",
+        "up": false,
+        "down": false,
+        "audio": "full",
+        "stopsOnUnplug": true
+      },
+      "wifi": false,
+      "adbWifi": true
+    },
+    "nocallaudio": {
+      "device": "Test Phone",
+      "battery": 50,
+      "charging": false,
+      "sims": [
+        {
+          "slot": 1,
+          "sub": 2,
+          "name": "SIM 2",
+          "carrier": "Test Carrier",
+          "signal": 3
+        }
+      ],
+      "dialer": true,
+      "helper": {
+        "state": "stopped",
+        "up": false,
+        "down": false,
+        "audio": "full",
+        "why": "wifi",
+        "noCallAudio": "wifi"
+      },
+      "wifi": false,
+      "adbWifi": true
     }
   }
 }

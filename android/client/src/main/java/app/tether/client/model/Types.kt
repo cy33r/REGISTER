@@ -35,20 +35,22 @@ val Sms.incoming get() = box == 1
 
 /** A call as the Android phone reports it (`call.state`), with `elsewhere` / `where` (protocol §5.1). */
 data class Call(val cid: String, val num: String, val name: String?, val state: String, val dir: String, val sub: Int?,
-                val since: Long?, val cause: String?, val hold: Boolean, val elsewhere: Boolean, val where: String?) {
+                val since: Long?, val cause: String?, val hold: Boolean, val elsewhere: Boolean, val where: String?,
+                /** On an ended call: "busy", "congestion" or "ended" (the tone the Android phone's dialer would play); null from older apps. */
+                val tone: String? = null) {
     val isEnded get() = state == "ended"
     val isIncoming get() = dir == "in"
 
     fun json(): JSONObject = JSONObject().put("cid", cid).put("num", num).put("state", state).put("dir", dir).put("hold", hold)
         .apply {
             name?.let { put("name", it) }; sub?.let { put("sub", it) }; since?.let { put("since", it) }
-            cause?.let { put("cause", it) }; if (elsewhere) put("elsewhere", true); where?.let { put("where", it) }
+            cause?.let { put("cause", it) }; if (elsewhere) put("elsewhere", true); where?.let { put("where", it) }; tone?.let { put("tone", it) }
         }
 
     companion object {
         fun of(o: JSONObject) = Call(o.optString("cid"), o.optString("num"), o.optStringOrNull("name"), o.optString("state"),
             o.optString("dir", "in"), o.optIntOrNull("sub"), o.optLongOrNull("since"), o.optStringOrNull("cause"),
-            o.optBoolean("hold"), o.optBoolean("elsewhere"), o.optStringOrNull("where"))
+            o.optBoolean("hold"), o.optBoolean("elsewhere"), o.optStringOrNull("where"), o.optStringOrNull("tone"))
     }
 }
 

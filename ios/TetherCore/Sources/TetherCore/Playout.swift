@@ -118,6 +118,22 @@ public final class PlayoutBuffer: @unchecked Sendable {
     /// while its burst is still arriving.
     private var lastNoted = 0.0, lastDelay = 0.0
     private var stallBase: Double?
+    /// The previous frame's arrival (uptime ns), and whether the frames after a restart still come as one burst.
+    private var lastArrivalAt: UInt64 = 0
+    private var inRestartBurst = false
+    /// Arrival statistics started again after a gap of seconds (or a reset).
+    public private(set) var arrivalRestarts = 0
+
+    /// Forgets the arrival window and the drift estimate; the next frames are measured as at a call's start (a shorter
+    /// settling time: the link is already tuned for the call).
+    private func restartArrivals() {
+        firstArrival = 0; expectedSamples = 0; delayCount = 0; delayNext = 0; sinceStats = 0
+        lastNoted = 0; lastDelay = 0; stallBase = nil
+        driftPpm = 0
+        startupArrivals = Self.restartSettleFrames
+        inRestartBurst = true
+        arrivalRestarts += 1
+    }
     /// The target the arrival statistics ask for (samples); `target` never shrinks below it and jumps up to it.
     /// Written on the audio queue, read for statistics.
     public private(set) var jitterFloor: Int
@@ -229,6 +245,16 @@ public final class PlayoutBuffer: @unchecked Sendable {
      * follows it up at once (before the next gap is concealed, not after) and down only by the clean-playout shrink.
      */
     private func noteArrival(samples: Int, missing: Int, at: UInt64) {
+        // No frame for seconds (the link dropped and came back, a new session, the phone moved the call's audio): what
+        // comes next is a new stream as far as timing goes. The old window would put a step of seconds between its
+        // halves (a drift of hundreds of thousands of ppm) or leave every later frame out as a stall's burst, so the
+        // arrival statistics start again, like at the call's start (the target and the audio queued stay).
+        let sinceLast = lastArrivalAt > 0 && at > lastArrivalAt ? Double(at - lastArrivalAt) / 1e6 : 0
+        lastArrivalAt = at
+        if sinceLast > Self.restartGapMs { restartArrivals(); return }
+        // After a restart, the burst a relink may deliver first (frames queued on the way, all within a few ms) is no
+        // measure of the link either.
+        if inRestartBurst { if sinceLast < Self.burstSpacingMs { return }; inRestartBurst = false }
         // The first ~2 s are no measure of the link: the connection interval is still being shortened for the call
         // (a 250-280 ms hold-up then, on a real iPhone, 2026-11-23), which kept the target at its maximum for
         // the next 10 s. Concealed gaps deepen the buffer meanwhile.
@@ -305,6 +331,14 @@ public final class PlayoutBuffer: @unchecked Sendable {
     /// No frame for this long (ms) is a stall, not jitter (the arrival statistics leave its burst out).
     static let stallMs = 250.0
 
+    /// No frame for this long (ms) restarts the arrival statistics: a relink or a new session, not a stall (stalls with
+    /// Bluetooth tethering on last up to ~0.9 s and keep their frames).
+    public static let restartGapMs = 2000.0
+    /// Frames closer together than this (ms) right after a restart are its burst and not measured.
+    static let burstSpacingMs = 8.0
+    /// Frames not measured after a restart (1 s), like the first ~2 s of a call.
+    static let restartSettleFrames = 50
+
     /// The most audio kept queued (s): beyond it the oldest is cut, speech or not.
     public static let maxBacklogSeconds = 0.8
 
@@ -326,5 +360,6 @@ public final class PlayoutBuffer: @unchecked Sendable {
     /** Samples queued right now (the playout delay beyond the output's own). */
     public var buffered: Int { ring.available }
 
-    public func reset() { ring.clear(); lock.lock(); primed = false; concealRun = 0; lock.unlock(); firstArrival = 0 }
+    /// Drops the queued audio and starts the arrival statistics again (audio queue; e.g. after an interruption).
+    public func reset() { ring.clear(); lock.lock(); primed = false; concealRun = 0; lock.unlock(); restartArrivals() }
 }

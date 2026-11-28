@@ -28,7 +28,11 @@ object UplinkRoutes {
     fun injectOrder(methods: List<String>, interceptDead: Boolean): List<String> =
         if (interceptDead) methods - "intercept" else methods
 
-    /** A fixed method from the app (the self-test's earlier choice): ignored when it is not among [methods]. */
+    /**
+     * A fixed method from the app (the self-test's earlier choice) first, then the other [methods]: a choice that does
+     * not open in this call must never leave the call without any injection (issue #14). Ignored when it is not among
+     * [methods] (a route this phone does not wire).
+     */
     fun fixedOrAuto(fixed: String, methods: List<String>): List<String> =
-        if (fixed == "auto" || fixed !in methods) methods else listOf(fixed)
+        if (fixed == "auto" || fixed !in methods) methods else listOf(fixed) + (methods - fixed)
 }

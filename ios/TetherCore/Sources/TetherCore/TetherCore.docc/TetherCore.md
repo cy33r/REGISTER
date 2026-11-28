@@ -81,7 +81,10 @@ The wire format is specified in `protocol/PROTOCOL.md` in the repository; the ar
 - ``PlayoutBuffer``
 - ``SampleRing``
 - ``JitterBuffer``
+- ``DownlinkRate``
 - ``HangUpGuard``
+- ``CallEndTone``
+- ``CallEndToneGenerator``
 
 ### Texts, contacts and call history
 

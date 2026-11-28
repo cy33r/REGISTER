@@ -107,12 +107,21 @@ data class CallEntry(val id: Long, val num: String, val name: String?, val date:
         .put("type", type).apply { name?.let { put("name", it) }; sub?.let { put("sub", it) } }
 }
 
+/**
+ * A call as clients see it (protocol §5 `Call`). [tone]: "busy" | "congestion" | "ended", the tone Android's own phone app
+ * would play for how the call ended; sent only with state "ended".
+ */
 data class CallInfo(val cid: String, val num: String, val name: String?, val state: String, val dir: String,
-                    val sub: Int?, val since: Long?, val cause: String?, val hold: Boolean) {
+                    val sub: Int?, val since: Long?, val cause: String?, val hold: Boolean, val tone: String?) {
+    /** Without [tone] (the constructor of 1.2.6 and older, kept for code built against it). */
+    constructor(cid: String, num: String, name: String?, state: String, dir: String, sub: Int?, since: Long?, cause: String?, hold: Boolean) :
+        this(cid, num, name, state, dir, sub, since, cause, hold, null)
+
     fun json(): JSONObject = JSONObject().put("cid", cid).put("num", num).put("state", state).put("dir", dir)
         .put("hold", hold).apply {
             name?.let { put("name", it) }; sub?.let { put("sub", it) }
             since?.let { put("since", it) }; cause?.let { put("cause", it) }
+            if (state == "ended") tone?.let { put("tone", it) }
         }
 }
 

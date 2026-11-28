@@ -28,13 +28,33 @@ object CallAudioReport {
             } else append(", uplink injection NOT open: the other side cannot hear the iPhone")
             if (inject != null && injectErrors.isNotEmpty()) append(" after ").append(injectErrors.joinToString("; "))
             if (inject == null && injectErrors.isNotEmpty()) append(" (").append(injectErrors.joinToString("; ")).append(')')
+            if (inject == null && injectErrors.isEmpty()) info.str("injectWhy")?.let { append(" (").append(it).append(')') }
+            info.str("injectSwitched")?.let { append("; injection switched during the call: ").append(it) }
             val wait = info.optLong("openWaitMs", -1)
             if (wait >= 1000) append("; opened ").append("%.1f".format(wait / 1000.0)).append(" s after the start (waited for the call's audio)")
             append("; ").append(micLine(u, setting, memory, info.optJSONObject("mic"), canMute))
             info.str("earpiece")?.let { append("; earpiece ").append(it) }
+            info.optJSONObject("voiceVolume")?.let { v -> volumeText(v)?.let { append(" (").append(it).append(')') } }
             val other = errors - injectErrors.toSet()
             if (other.isNotEmpty()) append("; errors: ").append(other.joinToString("; "))
         }
+    }
+
+    /** "voice-call volume 1 of 1–8, muted": what the earpiece is set to as the call's audio opens (issue #13). */
+    fun volumeText(v: JSONObject): String? {
+        if (!v.has("index")) return null
+        return "voice-call volume ${v.optInt("index")} of ${v.optInt("min")}–${v.optInt("max")}" + if (v.optBoolean("muted")) ", muted" else ""
+    }
+
+    /**
+     * For the call figures the iPhone keeps too ("Android phone call audio: …"): which inject method the call used and
+     * why, or why none opened (issue #14: an iPhone report alone said only "method -").
+     */
+    fun injectSummary(stats: JSONObject): String {
+        if (!stats.has("inject")) return ""   // an older helper
+        val inject = stats.str("inject")
+        return "; inject " + (inject ?: "NONE") + (stats.str("injectWhy")?.let { " ($it)" } ?: "") +
+            (stats.str("injectSwitched")?.let { "; switched $it" } ?: "")
     }
 
     /** Whether and how the phone's own microphone is kept out of the call (a redirect mode, [mic]) or muted, and why. */
@@ -91,6 +111,25 @@ object CallAudioReport {
         val speech = stats.optInt("uplinkSpeechFrames", -1)
         return if (frames >= 250 && speech == 0)
             "call audio: the iPhone sent $frames frames without any speech: is its microphone allowed for Tether (iOS Settings › Privacy › Microphone) and the call not muted?"
+        else null
+    }
+
+    /** The start INFO's capture errors in one line ("voice_downlink IllegalStateException: startRecording failed; …"). */
+    fun captureErrors(info: JSONObject): String {
+        val e = info.optJSONArray("errors") ?: return "no errors reported"
+        return (0 until e.length()).map { e.optString(it) }.filter { it.startsWith("capture:") }
+            .joinToString("; ") { it.removePrefix("capture:") }.ifEmpty { "no errors reported" }
+    }
+
+    /**
+     * From the helper's call figures: the far end's audio the phone captured ([downFrames] sent to the client) held no
+     * speech at all, so a "no sound" call was silent before it reached the client (a silent far end, or a phone that
+     * gives Tether a quiet downlink). A call whose frames held speech points at the client's playout instead.
+     */
+    fun silentFarEnd(stats: JSONObject, downFrames: Long): String? {
+        val speech = stats.optInt("downlinkSpeechFrames", -1)
+        return if (downFrames >= 250 && speech == 0)
+            "call audio: the phone captured $downFrames frames of the call without any speech in them: the other side was silent, or this phone gives Tether only a quiet copy of the call's audio"
         else null
     }
 }

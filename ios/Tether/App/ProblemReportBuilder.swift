@@ -211,8 +211,8 @@ final class AppEvents: @unchecked Sendable {
         }
         l.append("CallKit: calls known \(CXCallObserver().calls.count)")
         if let a = model.lastAudioStats {
-            l.append(String(format: "last call: playout delay %.0f ms (target %.0f), underruns %d, drained %.0f ms, added %.0f ms, lost %d of %d frames, arrival jitter %.1f ms, worst gap %.0f ms, io %.1f ms, out latency %.1f ms",
-                            a.delayMs, a.playoutMs, a.underruns, a.trimmedMs, a.addedMs, a.lost, a.frames, a.jitterMs, a.worstGapMs, a.ioBufferMs, a.outputLatencyMs))
+            l.append(String(format: "last call: playout delay %.0f ms (target %.0f), underruns %d, drained %.0f ms, added %.0f ms, lost %d of %d frames, speech %d frames, arrival jitter %.1f ms, worst gap %.0f ms, io %.1f ms, out latency %.1f ms",
+                            a.delayMs, a.playoutMs, a.underruns, a.trimmedMs, a.addedMs, a.lost, a.frames, a.speechFrames, a.jitterMs, a.worstGapMs, a.ioBufferMs, a.outputLatencyMs))
         } else {
             l.append("last call: no call since the app started")
         }

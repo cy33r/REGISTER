@@ -126,6 +126,23 @@ class DiagFilterTest {
         assertFalse(DiagFilter.builtIn(7))
     }
 
+    @Test fun audioHalLinesAboutTheCallsPaths() {
+        // What issue #14 (an injection the far end never hears) and #13 (a busy voice PCM) need from the phone's log.
+        val log = listOf(
+            "11-25 22:12:43.100  1041  2201 E audio_hw_primary: select_devices: unable to find path 'afe-proxy-playback afe-proxy'",
+            "11-25 22:12:43.120  1041  2201 D audio_route: Apply path: incall_music_uplink afe-proxy",
+            "11-25 22:12:43.200  1041  2201 E voice: voice_start_usecase: cannot open device pcmC0D15c: Device or resource busy",
+            "11-25 22:12:43.300  8136  8161 I Tether  : call audio path: capture intercept, uplink injection open via telephony_tx",
+            "11-25 22:12:43.400  1041  2201 D AudioFlinger: something about a deep buffer",
+            "11-25 22:12:43.500  1041  2201 I AudioHAL: Set_SpeechCall_UL_Mute=1",
+        )
+        val out = DiagFilter.halLines(log)
+        assertEquals(4, out.size)
+        assertTrue(out[0].contains("unable to find path"))
+        assertTrue(out.none { it.contains(" Tether ") })
+        assertEquals("newest kept", listOf(log.last()), DiagFilter.halLines(log, max = 1))
+    }
+
     @Test fun logRingKeepsTheNewest() {
         repeat(450) { LogRing.add("line $it") }
         val t = LogRing.tail()

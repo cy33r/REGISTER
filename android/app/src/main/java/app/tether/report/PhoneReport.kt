@@ -96,6 +96,7 @@ object PhoneReport {
         s.kv("Secure settings granted (over ADB)", Adb.hasSecureSettings(app))
         s.kv("Wireless debugging paired", app.prefs.getBoolean("adb_paired", false))
         s.kv("Wireless debugging on", Settings.Global.getInt(app.contentResolver, "adb_wifi_enabled", 0) == 1)
+        s.kv("USB debugging on (helper outlives Wi-Fi)", Adb.usbDebugging(app))
         s.kv("TCP adb (legacy)", if (app.prefs.getBoolean(Adb.PREF_LEGACY, false)) "on, port ${app.prefs.getInt(Adb.PREF_LEGACY_PORT, 5555)}" else "off")
         s.kv("Do Not Disturb access", runCatching { app.hub.ringer.dndAccess() }.getOrNull())
         val h = app.hub.helper.hello

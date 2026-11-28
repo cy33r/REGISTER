@@ -60,6 +60,21 @@ class PlayoutBuffer(rate: Int, val hiPercentile: Double = 0.998) {
     // while its burst is still arriving.
     private var lastNoted = 0.0; private var lastDelay = 0.0
     private var stallBase: Double? = null
+    /** The previous frame's arrival (ns), and whether the frames after a restart still come as one burst. */
+    private var lastArrivalAt = 0L
+    private var inRestartBurst = false
+    /** Arrival statistics started again after a gap of seconds (or a reset). */
+    @Volatile var arrivalRestarts = 0; private set
+
+    /** Forgets the arrival window and the drift estimate; the next frames are measured as at a call's start (shorter). */
+    private fun restartArrivals() {
+        firstArrival = 0; expectedSamples = 0; delayCount = 0; delayNext = 0; sinceStats = 0
+        lastNoted = 0.0; lastDelay = 0.0; stallBase = null
+        driftPpm = 0.0
+        startupArrivals = RESTART_SETTLE_FRAMES
+        inRestartBurst = true
+        arrivalRestarts++
+    }
     /** The target the arrival statistics ask for (samples); [target] never shrinks below it and jumps up to it. */
     @Volatile var jitterFloor = (rate * 0.03).toInt(); private set
     /** Lost frames filled in by the decoder's concealment (pushed with `concealed`). */
@@ -180,6 +195,14 @@ class PlayoutBuffer(rate: Int, val hiPercentile: Double = 0.998) {
      * still in time. Recomputed every 0.5 s; the target follows it up at once and down only by the clean-playout shrink.
      */
     private fun noteArrival(samples: Int, missing: Int, at: Long) {
+        // No frame for seconds (a relink, a new session, the call's audio moved): a new stream as far as timing goes. The
+        // old window would put a step of seconds between its halves (a huge fake drift) or leave every later frame out as
+        // a stall's burst, so the arrival statistics start again (the target and the queued audio stay).
+        val sinceLast = if (lastArrivalAt != 0L && at > lastArrivalAt) (at - lastArrivalAt) / 1e6 else 0.0
+        lastArrivalAt = at
+        if (sinceLast > RESTART_GAP_MS) { restartArrivals(); return }
+        // After a restart, the burst a relink may deliver first (frames queued on the way) is no measure either.
+        if (inRestartBurst) { if (sinceLast < BURST_SPACING_MS) return; inRestartBurst = false }
         // The first ~2 s are no measure of the link: the connection interval is still being shortened for the call.
         if (startupArrivals > 0) { startupArrivals--; return }
         if (firstArrival == 0L || at < firstArrival) { firstArrival = at; expectedSamples = 0; delayCount = 0; delayNext = 0; lastNoted = 0.0; stallBase = null }
@@ -231,13 +254,20 @@ class PlayoutBuffer(rate: Int, val hiPercentile: Double = 0.998) {
         else { System.arraycopy(last, k, last, 0, lastLen - k); System.arraycopy(out, n - k, last, lastLen - k, k) }
     }
 
-    fun reset() { synchronized(lock) { r = 0; w = 0; count = 0; primed = false; concealRun = 0 }; firstArrival = 0 }
+    /** Drops the queued audio and starts the arrival statistics again (decode thread). */
+    fun reset() { synchronized(lock) { r = 0; w = 0; count = 0; primed = false; concealRun = 0 }; restartArrivals() }
 
     companion object {
         /** A far clock slower than this (ppm) is made up for in quiet frames; the 10 s estimate wanders by up to ~800 ppm. */
         const val SLOW_CLOCK_PPM = 3000.0
         /** No frame for this long (ms) is a stall, not jitter (the arrival statistics leave its burst out). */
         const val STALL_MS = 250.0
+        /** No frame for this long (ms) restarts the arrival statistics: a relink or a new session, not a stall. */
+        const val RESTART_GAP_MS = 2000.0
+        /** Frames closer together than this (ms) right after a restart are its burst and not measured. */
+        const val BURST_SPACING_MS = 8.0
+        /** Frames not measured after a restart (1 s). */
+        const val RESTART_SETTLE_FRAMES = 50
         /** The most audio kept queued (s): beyond it the oldest is cut, speech or not. */
         const val MAX_BACKLOG_SECONDS = 0.8
         /** Room beyond the arrival spread: the playback thread takes 10 ms at a time. */

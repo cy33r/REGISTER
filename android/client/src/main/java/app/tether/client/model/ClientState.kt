@@ -54,6 +54,16 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
     var recents: List<CallEntry> = emptyList(); private set
     var contactsVersion = ""; private set
     val readUpTo = HashMap<Long, Long>()
+    /** Texts starred on this phone (ids; Android's message store has no star, so it stays here). */
+    val starred = HashSet<Long>()
+
+    fun isStarred(id: Long) = id in starred
+
+    /** Stars or unstars texts (by id). */
+    fun setStarred(ids: Collection<Long>, on: Boolean) {
+        if (on) starred.addAll(ids) else starred.removeAll(ids.toSet())
+        persist()
+    }
     val drafts = HashMap<String, String>()
     val threadSim = HashMap<String, Int>()
     var status: JSONObject? = null; private set
@@ -177,7 +187,9 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
 
     private fun applyDeleted(ids: List<Long>, thread: Long?) {
         val gone = ids.toHashSet()
+        if (thread != null) starred.removeAll(sms.filter { it.thread == thread }.map { it.id }.toSet())
         sms = sms.filterNot { it.id in gone || (thread != null && it.thread == thread) }
+        starred.removeAll(gone)
         if (thread != null) { readUpTo.remove(thread); fx.clearSms(thread) }
         if (ids.isNotEmpty()) {
             fx.clearSmsIds(ids)
@@ -243,27 +255,66 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
 
     // ------------------------------------------------------------------ network switches
 
+    private class NetworkRequest(val id: Int)
+    private var netWrite: NetworkRequest? = null
+
     private fun netRequest(pending: String, body: JSONObject) {
-        if (!link.isConnected) return
+        if (!link.isConnected || netPending != null) return
         netPending = pending
         netError = null
-        link.send(T.NET_SET, body, expectReply = true)
+        val id = link.send(T.NET_SET, body, expectReply = true)
+        if (id == 0) { netPending = null; netError = Problem.NO_ANSWER; fx.changed(); return }
+        val request = NetworkRequest(id)
+        netWrite = request
         // A lost reply must not leave the switches greyed out for ever.
-        fx.schedule(35_000) { if (netPending == pending) { netPending = null; netError = Problem.NO_ANSWER; fx.changed() } }
+        fx.schedule(35_000) {
+            if (netWrite === request) {
+                netWrite = null; netPending = null; netError = Problem.NO_ANSWER; fx.changed()
+            }
+        }
         fx.changed()
     }
 
     fun setNet(what: String, on: Boolean) = netRequest(what, JSONObject().put("what", what).put("on", on))
     fun setDataSim(sub: Int) = netRequest("dataSub", JSONObject().put("what", "dataSub").put("on", true).put("sub", sub))
     fun setNetworkMode(slot: Int, mode: String) = netRequest("rat$slot", JSONObject().put("what", "rat").put("on", true).put("slot", slot).put("mode", mode))
-    private var netAskedAt = 0L
+    private var netAskedAt: Long? = null
+    var hasLiveStatus = false; private set
     /** Asks for the switches' state (at most every 10 s: the Link screen asks on every redraw until it has one). */
     fun refreshNet() {
-        if (!link.isConnected || fx.now() - netAskedAt < 10_000) return
+        if (!link.isConnected || netAskedAt?.let { fx.now() - it < 10_000 } == true) return
         netAskedAt = fx.now()
         link.send(T.NET_GET, JSONObject(), expectReply = true)
     }
     fun runSelftest() { selftest = null; link.send(T.SELFTEST, JSONObject(), expectReply = true); fx.changed() }
+
+    // ------------------------------------------------------------------ carrier codes (USSD)
+
+    /** The carrier's answer to a code: [text] when [ok], else [err] (the Android phone's words, or [Problem.NO_ANSWER]). */
+    data class UssdAnswer(val code: String, val ok: Boolean, val text: String?, val err: String?)
+
+    /** Whether the Android phone runs carrier codes (`status.tools.ussd`, from builds with the phone tools). */
+    val canUssd: Boolean get() = status?.optJSONObject("tools")?.optBoolean("ussd") == true
+    /** The code waiting for its answer (one at a time, as on the Android phone), and the last answer. */
+    var ussdPending: String? = null; private set
+    var ussdAnswer: UssdAnswer? = null; private set
+    private var ussdRequest = 0
+
+    /** Sends [code] on SIM [sub] through the Android phone; the answer comes as [ussdAnswer] (at most ~35 s). */
+    fun sendUssd(code: String, sub: Int?) {
+        if (!link.isConnected || ussdPending != null || !UssdCodes.valid(code)) return
+        ussdPending = code
+        ussdAnswer = null
+        ussdRequest = link.send(T.USSD_SEND, JSONObject().put("code", code).apply { sub?.let { put("sub", it) } }, expectReply = true)
+        // The Android phone answers within 30 s (its own timeout); a lost reply must not leave the screen waiting.
+        val asked = ussdRequest
+        fx.schedule(40_000) {
+            if (ussdPending == code && ussdRequest == asked) { ussdPending = null; ussdAnswer = UssdAnswer(code, false, null, Problem.NO_ANSWER); fx.changed() }
+        }
+        fx.changed()
+    }
+
+    fun clearUssd() { ussdAnswer = null; fx.changed() }
 
     // ------------------------------------------------------------------ sync and texts
 
@@ -351,14 +402,22 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
         // placeholder; an unconfirmed one turns Not delivered after 2 min, never resent).
         pendingSms.clear()
         syncing = false
+        hasLiveStatus = false
+        net = null
+        netAskedAt = null
+        netError = null
         netPending = null
+        netWrite = null
         fx.changed()
     }
 
     /** A control message that is not about calls or call audio. Returns false when it was not one of ours. */
     fun received(t: String, b: JSONObject, re: Int?): Boolean {
         when (t) {
-            T.STATUS -> status = b   // saved with the next real change
+            T.STATUS -> {
+                status = b   // saved with the next real change
+                hasLiveStatus = true
+            }
             T.SMS_BATCH -> {
                 val items = b.optJSONArray("items").mapObjects(::smsOf)
                 val recent = fx.now() - 6 * 3600_000L
@@ -467,9 +526,16 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
                 } else net = b
                 netError = b.optStringOrNull("err")
                 // A state pushed because another client flipped a switch must not clear our own pending one.
-                if (re != null) netPending = null
+                if (re != null && re == netWrite?.id) { netPending = null; netWrite = null }
             }
             T.SELFTEST_RESULT -> selftest = b
+            T.USSD_RESULT -> {
+                // Only the answer to this client's own pending code.
+                val code = ussdPending ?: return true
+                if (re != null && re != ussdRequest) return true
+                ussdPending = null
+                ussdAnswer = UssdAnswer(code, b.optBoolean("ok"), b.optStringOrNull("text"), b.optStringOrNull("err"))
+            }
             T.ERROR -> problem = Problem(Problem.OTHER, b.optString("msg"))
             T.PONG, T.PING -> return true
             else -> return false
@@ -549,7 +615,7 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
     fun wipe() {
         resetPendingIds()
         sms = emptyList(); contacts = emptyList(); recents = emptyList(); contactsVersion = ""
-        readUpTo.clear(); drafts.clear(); threadSim.clear(); status = null; lists = BlockLists(); smsSyncedUpTo = null
+        readUpTo.clear(); starred.clear(); drafts.clear(); threadSim.clear(); status = null; lists = BlockLists(); smsSyncedUpTo = null
         outbox = emptyList(); recentsSeenUpTo = null; net = null; pendingRead.clear(); pendingSms.clear(); smsIndex.clear()
         rebuildIndex(); persist()
     }
@@ -568,6 +634,7 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
         .put("recents", JSONArray(recents.map { it.json() }))
         .put("contactsVersion", contactsVersion)
         .put("readUpTo", JSONObject().apply { readUpTo.forEach { (k, v) -> put(k.toString(), v) } })
+        .put("starred", JSONArray(starred.toList()))
         .put("drafts", JSONObject(drafts as Map<*, *>))
         .put("threadSim", JSONObject(threadSim as Map<*, *>))
         .put("lists", lists.json())
@@ -584,6 +651,7 @@ class ClientState(private val link: LinkPort, private val fx: Effects) {
         recents = o.optJSONArray("recents").mapObjects(::callEntryOf)
         contactsVersion = o.optString("contactsVersion")
         o.optJSONObject("readUpTo")?.let { r -> r.keys().forEach { k -> k.toLongOrNull()?.let { readUpTo[it] = r.optLong(k) } } }
+        o.optJSONArray("starred")?.let { a -> starred.clear(); for (i in 0 until a.length()) starred += a.optLong(i) }
         o.optJSONObject("drafts")?.let { r -> r.keys().forEach { drafts[it] = r.optString(it) } }
         o.optJSONObject("threadSim")?.let { r -> r.keys().forEach { threadSim[it] = r.optInt(it) } }
         status = o.optJSONObject("status")

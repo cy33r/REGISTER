@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.role.RoleManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -18,6 +19,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -34,10 +36,14 @@ import app.tether.core.PairingCode
 import app.tether.helper.CallAudio
 import app.tether.helper.LocalMutes
 import app.tether.helper.MicPath
+import app.tether.link.Hub
 import app.tether.link.LinkLog
 import app.tether.link.LinkService
 import app.tether.report.PhoneReport
 import app.tether.report.ReportUi
+import app.tether.telecom.CallRegistry
+import app.tether.update.UpdateUi
+import app.tether.update.Updater
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -51,9 +57,11 @@ class MainActivity : Activity() {
     private var advanced = false
     private val main = Handler(Looper.getMainLooper())
     private var qrUntil = 0L
+    private var dialerRequestMessage: Int? = null
     private var qrBitmap: Bitmap? = null
     private var qrLegacy = false
     private val listener: () -> Unit = { main.post { render() } }
+    private val updater by lazy { Updater.get(this, "REGISTER-Android") }
 
     /** Runtime permissions this Android version knows: Bluetooth ones from 12, notifications from 13. */
     private val perms = (
@@ -77,12 +85,15 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         app.hub.addListener(listener)
+        updater.addListener(listener)
+        updater.maybeCheckDaily()
         render()
         tick()
     }
 
     override fun onPause() {
         app.hub.removeListener(listener)
+        updater.removeListener(listener)
         main.removeCallbacksAndMessages(null)
         super.onPause()
     }
@@ -97,6 +108,53 @@ class MainActivity : Activity() {
     }
 
     private fun missingPerms() = perms.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }.toTypedArray()
+
+    @Suppress("DEPRECATION") // The platform role and legacy Telecom APIs both return an Activity result.
+    private fun requestDialerRole() {
+        try {
+            val intent = if (android.os.Build.VERSION.SDK_INT >= 29) {
+                val roles = getSystemService(RoleManager::class.java)
+                if (roles == null || !roles.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                    dialerRequestMessage = R.string.dialer_role_unavailable
+                    Log.w("Tether", "Default dialer role unavailable on SDK ${android.os.Build.VERSION.SDK_INT}")
+                    render()
+                    return
+                }
+                roles.createRequestRoleIntent(RoleManager.ROLE_DIALER)
+            } else {
+                Intent(android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
+                    .putExtra(android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName)
+            }
+            dialerRequestMessage = null
+            startActivityForResult(intent, REQUEST_DIALER_ROLE)
+        } catch (e: ActivityNotFoundException) {
+            dialerRequestUnavailable(e)
+        } catch (e: SecurityException) {
+            dialerRequestUnavailable(e)
+        }
+    }
+
+    private fun dialerRequestUnavailable(e: RuntimeException) {
+        Log.w("Tether", "Could not open default dialer request", e)
+        dialerRequestMessage = R.string.dialer_role_request_failed
+        render()
+    }
+
+    @Deprecated("The platform role request uses the Activity result API.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_DIALER_ROLE) return
+        val held = app.sims.isDialer()
+        Log.i("Tether", "Default dialer request: result=$resultCode held=$held sdk=${android.os.Build.VERSION.SDK_INT}")
+        dialerRequestMessage = dialerRoleMessage(held, resultCode)
+        render()
+        if (held) app.hub.refresh()
+    }
+
+    private companion object {
+        const val REQUEST_DIALER_ROLE = 2
+    }
+
 
     private fun render() {
         root.removeAllViews()
@@ -163,11 +221,10 @@ class MainActivity : Activity() {
             requestPermissions(missingPerms(), 1)
         })
         setup.addView(step(getString(R.string.step_n, 2, getString(R.string.step_dialer)), app.sims.isDialer(), getString(R.string.action_set),
-            help = getString(R.string.help_dialer)) {
-            startActivityForResult(if (android.os.Build.VERSION.SDK_INT >= 29) getSystemService(RoleManager::class.java).createRequestRoleIntent(RoleManager.ROLE_DIALER)
-                else Intent(android.telecom.TelecomManager.ACTION_CHANGE_DEFAULT_DIALER)
-                    .putExtra(android.telecom.TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, packageName), 2)
-        })
+            help = getString(R.string.help_dialer)) { requestDialerRole() })
+        if (!app.sims.isDialer()) dialerRequestMessage?.let { message ->
+            setup.addView(label(getString(message), R.color.warn, 13f))
+        }
         val pm = getSystemService(PowerManager::class.java)
         setup.addView(step(getString(R.string.step_n, 3, getString(R.string.step_battery)), pm.isIgnoringBatteryOptimizations(packageName), getString(R.string.action_set),
             help = getString(R.string.help_battery)) {
@@ -197,6 +254,18 @@ class MainActivity : Activity() {
             if (running) getString(R.string.helper_on) else getString(R.string.helper_stopped)) {
             Thread { app.hub.helper.ensureRunning(); app.hub.refresh() }.start()
         })
+        // Without Wi-Fi Android turns Wireless debugging off, and adbd stops with the helper in it (issues #26, #29).
+        if (h.optString("why") == "wifi") audio.addView(label(getString(R.string.helper_why_wifi), R.color.warn, 13f))
+        if (h.optBoolean("needsWifi")) {
+            audio.addView(label(getString(R.string.helper_needs_wifi), R.color.warn, 13f))
+            audio.addView(button(getString(R.string.action_usb_debugging), secondary = true) {
+                if (!Adb.enableUsbDebugging(this)) runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
+                Thread { app.hub.pushStatus() }.start()
+                render()
+            })
+        }
+        // Samsung restarts adbd when the USB cable is pulled out, and the helper with it (Galaxy A54, 2026-11-28).
+        if (h.optBoolean("stopsOnUnplug")) audio.addView(label(getString(R.string.helper_stops_on_unplug), R.color.warn, 13f))
         // The phone's own microphone during bridged calls (issue #2): by default a redirect audio mode takes it out of the
         // call where the phone allows it (MicPath); muting it is opt-in, since on some phones that also mutes the iPhone.
         if (app.hub.helper.audioLevel() != "unavailable") {
@@ -220,17 +289,20 @@ class MainActivity : Activity() {
             val blocked = mic == MicPath.Setting.MUTE && app.hub.audio.memory() == LocalMutes.Memory.BREAKS_UPLINK
             // No mic mute on this phone keeps the iPhone's voice in the call (Qualcomm: Android's mute is the whole Tx path).
             val unsupported = mic == MicPath.Setting.MUTE && !LocalMutes.canMute(CallAudio.silence)
+            // Qualcomm: Android's mute keeps the iPhone's voice with the in-call music injection only (LocalMutes).
+            val inCallMusic = unsupported && LocalMutes.canMute(CallAudio.silence, "telephony_tx")
             // Without a redirect mode the default setting's next step: the maker's own mic switch, where this phone has one that holds.
             val vendor = autoFailed && LocalMutes.autoPlan(CallAudio.silence, app.hub.audio.memory()).vendorMic
             audio.addView(label(getString(when {
                 vendor -> R.string.mic_auto_vendor
                 autoFailed -> R.string.mic_auto_unavailable
                 mic == MicPath.Setting.AUTO -> R.string.mic_auto_note
+                inCallMusic -> R.string.mic_mute_incall_music
                 unsupported -> R.string.mic_mute_unsupported
                 blocked -> R.string.mic_mute_blocked
                 mic == MicPath.Setting.MUTE -> R.string.mic_mute_on
                 else -> R.string.mic_open_note
-            }), if (blocked || unsupported || (autoFailed && !vendor)) R.color.warn else R.color.muted, 13f))
+            }), if (blocked || (unsupported && !inCallMusic) || (autoFailed && !vendor)) R.color.warn else R.color.muted, 13f))
             if (advanced) h.optString("micPath").takeIf { it.isNotEmpty() }?.let { p ->
                 audio.addView(label(when (p) {
                     "off" -> getString(R.string.mic_now_off, app.hub.helper.lastMic?.optString("mode") ?: "")
@@ -248,6 +320,13 @@ class MainActivity : Activity() {
                 }), if (u == "muted-locally-fixed") R.color.warn else R.color.muted, 13f))
             }
         }
+        // The phone's own call screen while a client has the call (issue #13): shown unless the owner turns it off.
+        audio.addView(android.widget.CheckBox(this).apply {
+            text = getString(R.string.call_screen_bridged); textSize = 15f; setTextColor(color(R.color.text))
+            isChecked = app.prefs.getBoolean(Hub.PREF_CALL_SCREEN, true)
+            setOnCheckedChangeListener { _, on -> app.prefs.edit().putBoolean(Hub.PREF_CALL_SCREEN, on).apply() }
+        })
+        audio.addView(label(getString(R.string.call_screen_bridged_note), R.color.muted, 13f))
 
         // Advanced: the technical options, hidden until asked for.
         val adv = card(getString(R.string.section_advanced))
@@ -282,11 +361,16 @@ class MainActivity : Activity() {
         help.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
         help.addView(button(getString(R.string.report_title), full = true) { ReportUi.send(this) { PhoneReport.build(app) } })
 
-        // About: the version, and the releases page for updates (opened in the browser; the app sends nothing).
+        // About: the version, and updates from this project's GitHub Releases (only when asked, or once a day if on).
         val about = card(getString(R.string.section_about))
         about.addView(label(getString(R.string.about_text), R.color.muted, 13f))
         about.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.text, 15f).apply { setTypeface(typeface, Typeface.BOLD) })
-        about.addView(button(getString(R.string.action_check_update), secondary = true, full = true) {
+        UpdateUi.button(this, updater)?.let { t ->
+            about.addView(button(t, full = true) { UpdateUi.onTap(this, updater, CallRegistry.active().isNotEmpty()) })
+        }
+        UpdateUi.status(this, updater)?.let { about.addView(label(it, R.color.muted, 13f)) }
+        about.addView(button(UpdateUi.dailyButton(this, updater), secondary = true, full = true) { updater.daily = !updater.daily })
+        about.addView(button(getString(R.string.action_releases_page), secondary = true, full = true) {
             runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL))) }
         })
     }
@@ -437,4 +521,10 @@ class MainActivity : Activity() {
      * (A73, 5G, 127.0.0.1, beta.2, SIM 2's carrier codes) is left as it is.
      */
     private fun fa(t: String): String = FA_DIGITS.replace(t) { m -> m.value.map { '۰' + (it - '0') }.joinToString("") }
+}
+
+internal fun dialerRoleMessage(held: Boolean, resultCode: Int): Int? = when {
+    held -> null
+    resultCode == Activity.RESULT_OK -> R.string.dialer_role_unconfirmed
+    else -> R.string.dialer_role_not_granted
 }

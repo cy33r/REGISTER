@@ -49,8 +49,9 @@ class UplinkRoutesTest {
         // The self-test used to choose intercept here (its check reads the same proxy) and the app kept that choice.
         val live = UplinkRoutes.injectOrder(all, interceptDead = true)
         assertEquals(live, UplinkRoutes.fixedOrAuto("intercept", live))
-        assertEquals(listOf("telephony_tx"), UplinkRoutes.fixedOrAuto("telephony_tx", live))
+        assertEquals("the choice first, the others after it (issue #14)", listOf("telephony_tx", "policy_mix"), UplinkRoutes.fixedOrAuto("telephony_tx", live))
         assertEquals(live, UplinkRoutes.fixedOrAuto("auto", live))
-        assertEquals(listOf("intercept"), UplinkRoutes.fixedOrAuto("intercept", all))
+        assertEquals(all, UplinkRoutes.fixedOrAuto("intercept", all))
+        assertEquals(listOf("policy_mix", "intercept", "telephony_tx"), UplinkRoutes.fixedOrAuto("policy_mix", all))
     }
 }

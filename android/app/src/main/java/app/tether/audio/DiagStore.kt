@@ -43,6 +43,7 @@ class DiagStore(private val file: File?, private val max: Int = 3) {
             "down-zeros" -> "the downlink capture read only zeros in the active call"
             "down-nothing" -> "the downlink capture delivered nothing"
             "up-stuck" -> "the phone took nothing from the uplink injection"
+            "up-slow" -> "the phone took the uplink injection clearly slower than real time"
             "call-end" -> "end of a bridged call"
             "now" -> "taken for this report"
             else -> t
@@ -55,7 +56,8 @@ class DiagStore(private val file: File?, private val max: Int = 3) {
          */
         fun lines(d: JSONObject, helperLog: Int = 200): List<String> {
             val out = ArrayList<String>()
-            out += "audio mode: ${d.optString("audioMode", "?")} · interception API: ${d.opt("interceptable") ?: "?"} · silence: ${d.optString("silence", "?")}"
+            out += "audio mode: ${d.optString("audioMode", "?")} · interception API: ${d.opt("interceptable") ?: "?"} · silence: ${d.optString("silence", "?")}" +
+                (d.optJSONObject("voiceVolume")?.let { v -> CallAudioReport.volumeText(v)?.let { " · $it" } } ?: "")
             val recs = d.optJSONArray("recordings") ?: JSONArray()
             out += "recordings now (${recs.length()}):"
             for (i in 0 until recs.length()) recs.optJSONObject(i)?.let { r ->
@@ -89,6 +91,7 @@ class DiagStore(private val file: File?, private val max: Int = 3) {
             }
             block("dumpsysAudio", "dumpsys audio (selected lines)")
             block("dumpsysPolicy", "dumpsys media.audio_policy (selected lines)")
+            block("audioHal", "audio HAL and policy log lines about call paths (newest)")
             d.optJSONArray("helperLog")?.let { a ->
                 out += "helper log (newest ${minOf(a.length(), helperLog)} lines):"
                 (maxOf(0, a.length() - helperLog) until a.length()).forEach { out += "  " + a.optString(it) }

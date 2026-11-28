@@ -36,6 +36,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Help › Check for updates (#19): handing a verified update to Android's installer; the user confirms it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Granted once over ADB so the app can turn Wireless debugging back on after a reboot. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
@@ -165,5 +167,8 @@
             android:authorities="${applicationId}.report"
             android:exported="false"
             android:grantUriPermissions="true" />
+
+        <!-- The package installer's answer to an update session (needs the user, installed, or failed). -->
+        <receiver android:name=".update.InstallReceiver" android:exported="false" />
     </application>
 </manifest>

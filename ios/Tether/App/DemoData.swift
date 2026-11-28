@@ -57,8 +57,11 @@ extension AppModel {
                    status: StatusBody(device: "Android phone", battery: 82, charging: false,
                                       sims: [SimInfo(slot: 0, sub: 3, name: "Personal", carrier: "Carrier A", signal: 4, net: "LTE", service: "in"),
                                              SimInfo(slot: 1, sub: 2, name: "Work", carrier: "Carrier B", signal: 2, net: "LTE+", service: "in")],
-                                      defaultSub: 3, dialer: true, helper: HelperInfo(state: "running", method: "intercept", capture: "intercept", up: true, down: true,
-                                                                                       silent: "full", micMute: false, uplink: "ok", mic: "auto", micPath: "off"),
+                                      defaultSub: 3, dialer: true, helper: args.contains("-TetherDemoNoWifi")
+                                        // -TetherDemoNoWifi: the helper stopped and cannot start without Wi-Fi (call screen notice).
+                                        ? HelperInfo(state: "stopped", micMute: false, mic: "auto", why: "wifi")
+                                        : HelperInfo(state: "running", method: "intercept", capture: "intercept", up: true, down: true,
+                                                     silent: "full", micMute: false, uplink: "ok", mic: "auto", micPath: "off"),
                                       wifi: true, adbWifi: true,
                                       tools: .init(ussd: true, find: true, ringer: true), ringer: "vibrate", dnd: false),
                    lists: BlockLists(blocked: ["7000", "+15550199"], muted: [3], system: true))
@@ -113,6 +116,10 @@ extension AppModel {
             let dialing = args.contains("-TetherDemoDialing")
             callScreen = CallScreen(uuid: UUID(), number: "+15550101", name: "Sara Ahmadi", state: dialing ? "dialing" : "active",
                                     incoming: !dialing, connectedAt: dialing ? nil : Date().addingTimeInterval(-42), sub: 3)
+            // -TetherDemoBusy / -TetherDemoCallFailed: a dialed call that just ended busy / failed, its tone playing.
+            if let tone: CallEndTone = args.contains("-TetherDemoBusy") ? .busy : args.contains("-TetherDemoCallFailed") ? .congestion : nil {
+                callScreen?.state = "ended"; callScreen?.incoming = false; callScreen?.connectedAt = nil; callScreen?.endTone = tone
+            }
             showCallScreen = !args.contains("-TetherDemoBanner")
             if args.contains("-TetherDemoRoutes") {   // the audio menu with a headset and a car (no Bluetooth in the simulator)
                 callScreen?.routes = AudioRoutes.options(inputs: [

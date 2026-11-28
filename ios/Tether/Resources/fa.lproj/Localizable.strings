@@ -302,3 +302,11 @@
 "Version %@" = "نسخهٔ %@";
 "Check for updates" = "بررسی آپدیت";
 "Opens the releases page in Safari. The app itself sends nothing to the internet." = "صفحهٔ نسخه‌ها در سافاری باز می‌شود. خود برنامه چیزی به اینترنت نمی‌فرستد.";
+
+/* From the original 1.2.6–1.3.0 */
+"No call audio right now: the Android phone is not on Wi-Fi, so it cannot start its audio helper (Wireless debugging needs Wi-Fi). Connect it to Wi-Fi, or set up TCP debugging on it (Setup)." = "فعلاً صدای تماس نیست: اندروید به WI-FI وصل نیست. آن را به WI-FI وصل کنید یا اشکال‌زدایی TCP را روشن کنید.";
+"Call audio stops if the Android phone leaves Wi-Fi. To keep it, turn on USB debugging there: Tether › Call audio › Turn on USB debugging." = "اگر اندروید از WI-FI جدا شود صدای تماس قطع می‌شود. برای جلوگیری، در اندروید: REGISTER › صدای تماس › روشن کردن اشکال‌زدایی USB.";
+"Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in Cellular. You can also enter the code manually from the scanner." = "دو گوشی را نزدیک هم نگه دارید. کد را همین‌جا اسکن کنید، یا با دوربین آیفون اسکن کنید و دکمهٔ زرد REGISTER را بزنید.";
+"Busy" = "مشغول";
+"No call audio: turn on Wi-Fi on the Android phone for a moment." = "صدای تماس نیست: WI-FI اندروید را یک لحظه روشن کنید.";
+"Unplugging the USB cable stops call audio: the Android phone restarts USB debugging and, without Wi-Fi, the audio helper does not come back. After unplugging, turn on Wi-Fi there for a few seconds." = "جدا کردن کابل USB صدای تماس را قطع می‌کند. بعد از جدا کردن، WI-FI اندروید را چند ثانیه روشن کنید.";

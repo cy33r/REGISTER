@@ -120,7 +120,7 @@ object CallRegistry {
         val dir = if (c.isOutgoing()) "out" else "in"
         return CallInfo(cid, num, name, stateName(c.stateCompat()), dir, app.sims.subFor(d.accountHandle),
             d.connectTimeMillis.takeIf { it > 0 }, d.disconnectCause?.reason?.takeIf { it.isNotBlank() },
-            d.can(Call.Details.CAPABILITY_HOLD))
+            d.can(Call.Details.CAPABILITY_HOLD), d.disconnectCause?.let { CallTone.of(it.tone) })
     }
 
     fun answer(cid: String) = calls[cid]?.answer(VideoProfile.STATE_AUDIO_ONLY) != null
@@ -234,13 +234,18 @@ class TetherInCallService : InCallService() {
         val info = CallRegistry.info(call)
         val open = PendingIntent.getActivity(this, 1, Intent(this, CallActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE)
+        // The pop-up: the same screen, marked as opened by itself so it closes again once the call is bridged and the
+        // owner chose not to see it. The ongoing call notification (with its buttons) stays either way.
+        val popup = PendingIntent.getActivity(this, 5, Intent(this, CallActivity::class.java).putExtra("auto", true)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE)
+        val showScreen = runCatching { (application as TetherApp).hub.showsCallScreen() }.getOrDefault(true)
         val who = info.name ?: info.num.ifEmpty { getString(R.string.unknown_caller) }
         val b = Notification.Builder(this, TetherApp.CH_CALLS)
             .setSmallIcon(R.drawable.ic_tether)
             .setContentIntent(open)
-            .setFullScreenIntent(open, true)
             .setCategory(Notification.CATEGORY_CALL)
             .setOngoing(true)
+        if (showScreen) b.setFullScreenIntent(popup, true)
         if (Build.VERSION.SDK_INT >= 31) {
             val person = Person.Builder().setName(who).setImportant(true).build()
             b.setStyle(if (info.state == "ringing") {

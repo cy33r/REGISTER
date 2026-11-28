@@ -19,6 +19,7 @@ import app.tether.core.Proto
 import app.tether.core.RecordReader
 import app.tether.core.T
 import app.tether.telecom.CallRegistry
+import app.tether.telecom.CallTone
 import app.tether.telecom.TestConnectionService
 import org.json.JSONObject
 import app.tether.data.UssdCode
@@ -98,8 +99,16 @@ class DebugReceiver : BroadcastReceiver() {
         // fake_outgoing: an outgoing call on the self-managed test line (never a SIM), shown on a linked iPhone.
         "fake_outgoing" -> if (!TestGuards.fakeCallAllowed(app.hub.targets().map { it.kind }, intent.getStringExtra("allow")))
                 "refused: an iPhone would show it; add --es allow iphone"
-            else { TestConnectionService.dialOut(app, "+10000000009"); "dialing on the test line" }
-        "fake_end" -> { TestConnectionService.endCurrent(); "ended" }
+            else {
+                // --es tone busy|congestion|ended: the call is not answered but ends after 4 s like a busy / failed number.
+                val tone = intent.getStringExtra("tone")?.takeIf { CallTone.fakeEnd(it) != null }
+                TestConnectionService.nextOutgoingEnd = tone
+                TestConnectionService.dialOut(app, "+10000000009")
+                "dialing on the test line" + (tone?.let { ", ends in 4 s with tone $it" } ?: "")
+            }
+        // --es tone busy|congestion|ended: ended by the "network" with that tone (clients play busy / congestion).
+        "fake_end" -> { val tone = intent.getStringExtra("tone"); TestConnectionService.endCurrent(tone)
+            "ended" + (CallTone.fakeEnd(tone)?.let { " with tone $tone" } ?: "") }
         "dryrun_on" -> { Hub.dryRun = true; "dry run on" }
         "dryrun_off" -> { Hub.dryRun = false; "dry run off" }
         // Creates a throw-away contact, edits it through the same path the iPhone uses, reads it back and

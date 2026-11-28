@@ -41,6 +41,7 @@ object Diag {
         .put("audioMode", MicPath.Mode.name(CallAudio.audioMode()))
         .put("interceptable", CallAudio.isInterceptable() ?: JSONObject.NULL)
         .put("silence", CallAudio.silence.name.lowercase())
+        .put("voiceVolume", CallAudio.voiceVolume())
         .put("recordings", runCatching { recordings() }.getOrElse { JSONArray().put(JSONObject().put("error", CallAudio.describe(it))) })
         .put("playbacks", runCatching { playbacks() }.getOrElse { JSONArray().put(JSONObject().put("error", CallAudio.describe(it))) })
         .put("inputs", runCatching { devices(AudioManager.GET_DEVICES_INPUTS) }.getOrElse { JSONArray() })
@@ -53,6 +54,8 @@ object Diag {
         put("dumpsysAudio", JSONArray(runCatching { DiagFilter.audio(run("dumpsys audio").lines()) }.getOrElse { listOf("error: ${CallAudio.describe(it)}") }))
         put("dumpsysPolicy", JSONArray(runCatching { DiagFilter.policy(run("dumpsys media.audio_policy").lines()) }.getOrElse { listOf("error: ${CallAudio.describe(it)}") }))
         put("helperLog", JSONArray(LogRing.tail(200)))
+        // What the audio HAL and policy said about the call's paths (issue #14: a route that plays nowhere shows only there).
+        put("audioHal", JSONArray(runCatching { DiagFilter.halLines(run("logcat -d -v threadtime -t 6000").lines()) }.getOrElse { listOf("error: ${CallAudio.describe(it)}") }))
         // Tether's own lines from every process (the app's earlier runs too): the shell may read the whole log.
         if (logcat) put("logcat", JSONArray(runCatching { run("logcat -d -t 1500 -s Tether:V").lines().takeLast(800) }.getOrElse { listOf("error: ${CallAudio.describe(it)}") }))
     }
@@ -149,6 +152,22 @@ object DiagFilter {
         if (s.contains("AUDIO_DEVICE_") || s.contains("DeviceInfo") || s.contains("Sink:") || s.contains("Source:")) s = QUOTED.replace(s, "\"–\"")
         return s.trimEnd().take(300)
     }
+
+    /**
+     * The audio HAL's and audio policy's log lines about a call's uplink and downlink paths, newest [max]: which mixer
+     * path or use case the injection got (Qualcomm `incall_music_uplink` / `afe-proxy-playback`, "unable to find path"),
+     * the voice use case and its PCM devices ("cannot open device", issue #13), vendor call keys and mutes (Samsung
+     * `l_voice_*`, MediaTek `Set_SpeechCall_*`, mic and device mutes), Telephony Tx routing. Tether's own lines are left
+     * out (they are in the app log), device names removed as in [clean].
+     */
+    fun halLines(lines: List<String>, max: Int = 150): List<String> =
+        lines.filter { HAL_LINE.containsMatchIn(it) && !OWN_LINE.containsMatchIn(it) }.map { clean(it) }.takeLast(max)
+
+    private val HAL_LINE = Regex("incall[_ -]?music|afe[-_]proxy|unable to find path|voice_start_usecase|voice_stop_usecase|cannot open device|" +
+        "telephony[_ ]?tx|AUDIO_DEVICE_OUT_TELEPHONY|AUDIO_DEVICE_IN_TELEPHONY|set_mic_mute|device_mute|mic_mute|Set_SpeechCall|SpeechCall|" +
+        "l_voice_(rx|tx)|voice_set_volume|setVoiceVolume|CALL_ASSISTANT|call_audio_intercept|getCallUplinkInjection|getCallDownlinkExtraction|" +
+        "Tx Device Mute|Rx Device Mute|Voice Tx Mute|Voice Rx Gain|speech_enhancement", RegexOption.IGNORE_CASE)
+    private val OWN_LINE = Regex("\\s[VDIWEF] (Tether|tether-helper)\\s*:")
 
     /**
      * From `dumpsys audio`: the audio mode and its owner, the phone-state and device-connection events, the recording

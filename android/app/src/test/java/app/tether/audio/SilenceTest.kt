@@ -20,9 +20,10 @@ class SilenceTest {
         assertTrue(Silence.SAMSUNG_QUALCOMM.vendorMicKeys)
     }
 
-    @Test fun samsungOnQualcommAlsoMutesTheVoiceStream() {
-        // Issue #15: where Samsung's keys do nothing on a Qualcomm HAL, the earpiece must still go quiet.
-        assertTrue(Silence.SAMSUNG_QUALCOMM.voiceStream)
+    @Test fun samsungOnQualcommHoldsTheVolumeInsteadOfMutingTheStream() {
+        // Issue #13 (Galaxy A73, One UI 8, 1.2.7): with the stream muted the earpiece still played at 15 of 15, and the
+        // muted stream read index 0, so the app's lowest-volume hold never acted. The volume hold alone quiets it.
+        assertFalse(Silence.SAMSUNG_QUALCOMM.voiceStream)
         assertFalse(Silence.SAMSUNG.voiceStream)
         assertFalse(Silence.MEDIATEK.voiceStream)
         assertTrue(Silence.QUALCOMM.voiceStream && Silence.OTHER.voiceStream)

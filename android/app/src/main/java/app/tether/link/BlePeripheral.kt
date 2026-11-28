@@ -92,6 +92,7 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
         runCatching { server?.close() }
         server = null
         dropKeepers()
+        priorities.forget()   // Bluetooth off: no LE connection outlives it
     }
 
     @android.annotation.TargetApi(29) // started only on Android 10+
@@ -287,6 +288,11 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
     private val keeperUp = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val held = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private val wantedPriority = ConcurrentHashMap<String, Int>()
+    /**
+     * Per LE connection: when a priority request may go out (PriorityPacer, issue #13: an unanswered one drops the link
+     * 40 s later). Kept while the connection is up, across sessions: only the LE ACL going down forgets it.
+     */
+    private val priorities = app.tether.core.LinkPriorities()
     private val pulseTimer = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "le-pulse").apply { isDaemon = true } }
 
     private fun openLe(address: String, onUp: (BluetoothGatt) -> Unit) {
@@ -310,18 +316,19 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
     fun holdLe(address: String) {
         held.add(address)
         if (address in keeperUp) {
-            keepers[address]?.let { runCatching { it.requestConnectionPriority(wantedPriority[address] ?: BluetoothGatt.CONNECTION_PRIORITY_BALANCED) } }
+            request(address)
             return
         }
-        openLe(address) { g ->
-            g.requestConnectionPriority(wantedPriority[address] ?: BluetoothGatt.CONNECTION_PRIORITY_BALANCED)
+        // Our GATT client joins the central's LE connection: what was asked on that connection still holds.
+        openLe(address) { _ ->
+            request(address)
             LinkLog.add("LE link held to ${LinkLog.short(address)}")
         }
     }
 
     /** The session ended: let the link go at once (a held link blocks the app's next connect). */
     fun releaseLe(address: String) {
-        held.remove(address); wantedPriority.remove(address)
+        held.remove(address); wantedPriority.remove(address)   // the connection's pacer stays (LinkPriorities)
         keepers.remove(address)?.let { g -> keeperUp.remove(address); runCatching { g.disconnect(); g.close() } }
     }
 
@@ -358,9 +365,27 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
     fun tune(address: String, high: Boolean) {
         val prio = if (high) BluetoothGatt.CONNECTION_PRIORITY_HIGH else BluetoothGatt.CONNECTION_PRIORITY_BALANCED
         wantedPriority[address] = prio
+        if (address in keeperUp && address in held) request(address)
+    }
+
+    /**
+     * Asks for the link's wanted priority, paced (PriorityPacer): never the same twice, never while the last request is
+     * unanswered (1.5 s at most), "balanced" not within 35 s of the last.
+     */
+    private fun request(address: String, due: Boolean = false) {
         val g = keepers[address]?.takeIf { address in keeperUp && address in held } ?: return
-        runCatching { g.requestConnectionPriority(prio) }
-        Log.i(TAG, "link priority ${if (high) "high" else "balanced"} requested")
+        val high = (wantedPriority[address] ?: BluetoothGatt.CONNECTION_PRIORITY_BALANCED) == BluetoothGatt.CONNECTION_PRIORITY_HIGH
+        val now = android.os.SystemClock.elapsedRealtime()
+        val step = if (due) priorities.due(address, now) else priorities.want(address, high, now)
+        if (step.send) {
+            runCatching { g.requestConnectionPriority(if (high) BluetoothGatt.CONNECTION_PRIORITY_HIGH else BluetoothGatt.CONNECTION_PRIORITY_BALANCED) }
+            Log.i(TAG, "link priority ${if (high) "high" else "balanced"} requested")
+            if (step.unansweredMs >= 0) LinkLog.add("link priority ${if (high) "high" else "balanced"} requested while the request of " +
+                "%.1f s ago is unanswered".format(step.unansweredMs / 1000.0))
+        } else if (step.retryInMs >= 0) {
+            Log.i(TAG, "link priority ${if (high) "high" else "balanced"} in ${step.retryInMs} ms (after the last request's answer or its pause)")
+            pulseTimer.schedule({ request(address, due = true) }, step.retryInMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+        }
     }
 
     fun untune(address: String) = tune(address, high = false)
@@ -379,7 +404,7 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
      */
     fun onAcl(address: String?, le: Boolean, up: Boolean) {
         address ?: return
-        if (le) { if (up) leLinks.add(address) else leLinks.remove(address) }
+        if (le) { if (up) leLinks.add(address) else { leLinks.remove(address); priorities.connectionDown(address) } }
         val onLe = pipeOnLe[address] ?: return
         if (LinkPolicy.gattPipeEnds(onLe, le, up)) {
             Log.i(TAG, "gatt pipe for $address ends: ${if (le) "LE" else "classic"} link ${if (up) "up" else "down"}")
@@ -427,6 +452,7 @@ class BlePeripheral(private val ctx: Context, private val onTransport: (Transpor
         @Suppress("unused")
         fun onConnectionUpdated(device: BluetoothDevice, interval: Int, latency: Int, timeout: Int, status: Int) {
             linkParams[device.address] = "interval %.2f ms, latency %d, timeout %d ms".format(interval * 1.25, latency, timeout * 10)
+            if (priorities.answered(device.address)) pulseTimer.execute { request(device.address, due = true) }   // a request waited for this answer
             Log.i(TAG, "link ${device.address}: ${linkParams[device.address]}")
         }
 

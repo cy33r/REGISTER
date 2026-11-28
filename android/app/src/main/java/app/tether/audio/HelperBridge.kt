@@ -3,6 +3,7 @@ package app.tether.audio
 import android.content.Context
 import android.util.Log
 import app.tether.adb.Adb
+import app.tether.adb.HelperLife
 import org.json.JSONObject
 import java.io.DataInputStream
 import java.io.DataOutputStream
@@ -165,7 +166,11 @@ class HelperBridge(private val ctx: Context) {
             Log.i(TAG, "helper disconnected: ${e.message}")
         } finally {
             if (sock === c) {
+                val wasUp = hello != null
                 sock = null; out = null; hello = null; lastInfo = null; lastUplink = null; lastMic = null
+                // In the link log: a helper gone with adbd (USB unplug on Samsung, Wi-Fi off) explains silent calls later.
+                if (wasUp) app.tether.link.LinkLog.add("audio helper stopped (its connection closed)" +
+                    (if (whyStopped() == "wifi") ": the phone is not on Wi-Fi, so it cannot start again until Wi-Fi is on for a moment" else ""))
                 // Whoever waits for an answer from this helper stops waiting now (not after its 20-25 s timeout).
                 pending?.second?.completeExceptionally(java.io.IOException("helper gone")); pending = null
             }
@@ -249,7 +254,8 @@ class HelperBridge(private val ctx: Context) {
     /**
      * Shell command that starts the helper detached from the ADB stream. The subshell + setsid detach it
      * into its own session; the trailing sleep keeps the ADB shell (and its process group) alive until
-     * that has happened, otherwise adbd can kill the child while the stream closes.
+     * that has happened, otherwise adbd can kill the child while the stream closes. It still stays in adbd's cgroup
+     * (the shell user may not move itself out), so it ends when adbd stops: see [HelperLife] (issues #26, #29).
      */
     fun launchCommand(): String {
         val apk = ctx.applicationInfo.sourceDir
@@ -322,6 +328,8 @@ class HelperBridge(private val ctx: Context) {
             Thread.sleep(300)
         }
         if (connected || tryConnect()) return null
+        // No adbd to reach without Wi-Fi (Wireless debugging is off): say so instead of three ADB attempts (#26, #29).
+        if (whyStopped() == "wifi") return "the Android phone is not on Wi-Fi, so Wireless debugging is off and the helper cannot start"
         var last = "helper did not connect"
         token = newToken()   // a fresh token for every launch
         port = newPort()
@@ -356,7 +364,26 @@ class HelperBridge(private val ctx: Context) {
             // A redirect mode took the call off the phone: fully silent. After the uplink check undid the mic mute (or a
             // redirect mode was undone), the phone is no longer fully silent.
             .apply { info?.optString("silent")?.takeIf { it.isNotEmpty() }?.let { put("silent", silentNow(it, u, lastMic)) } }
+            // Without Wi-Fi (issues #26, #29): why it cannot start, or that it would stop (see HelperLife).
+            .apply {
+                whyStopped()?.let { put("why", it) }
+                val usb = Adb.usbDebugging(ctx)
+                if (HelperLife.needsWifi(connected, android.os.Build.VERSION.SDK_INT, usb)) put("needsWifi", true)
+                // Samsung restarts adbd when the USB cable is pulled: without Wi-Fi the helper would not come back.
+                if (HelperLife.stopsOnUnplug(connected, android.os.Build.VERSION.SDK_INT, usb, Adb.usbConnected(ctx), Adb.onWifi(ctx), Adb.samsung, legacy()))
+                    put("stopsOnUnplug", true)
+            }
     }
+
+    /** TCP debugging (`adb tcpip`) is set up: adbd is reachable on 127.0.0.1 without Wi-Fi. */
+    private fun legacy(): Boolean = (ctx as? app.tether.TetherApp)?.prefs?.getBoolean(Adb.PREF_LEGACY, false) ?: false
+
+    /** The helper is not running and cannot start now (no Wi-Fi): status `helper.why`. */
+    fun cannotStart(): String? = whyStopped()
+
+    /** Status `helper.why` (see [HelperLife.why]). */
+    private fun whyStopped(): String? = HelperLife.why(connected, android.os.Build.VERSION.SDK_INT, Adb.onWifi(ctx),
+        android.provider.Settings.Global.getInt(ctx.contentResolver, "adb_wifi_enabled", 0) == 1, legacy())
 
     /** Status `silent` from the start INFO's [atStart] and the latest uplink / mic reports. */
     private fun silentNow(atStart: String, u: JSONObject?, mic: JSONObject?): String = when {
