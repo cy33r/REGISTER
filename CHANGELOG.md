@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.3.0 — 2026-11-28
+
 ### Updates
 
 - Android phone and Android client: **Check for updates** in Help (the client: Link › This phone). It reads the latest
