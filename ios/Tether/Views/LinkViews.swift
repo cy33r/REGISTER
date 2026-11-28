@@ -220,6 +220,8 @@ struct LinkView: View {
                     }
                 }
 
+                BatteryAlertSection()
+
                 AppearanceSection()
 
                 AboutSection()
@@ -1149,6 +1151,25 @@ private struct QRScanner: UIViewControllerRepresentable {
                   value != last else { return }
             last = value
             onCode?(value)
+        }
+    }
+}
+
+
+/// REGISTER: the Android phone's low-battery alert on this iPhone.
+struct BatteryAlertSection: View {
+    @ObservedObject private var alert = BatteryAlert.shared
+
+    var body: some View {
+        Section {
+            Picker(selection: $alert.threshold) {
+                Text("Off").tag(0)
+                ForEach([10, 15, 20, 25, 30, 40, 50], id: \.self) { v in Text(verbatim: Fa.number(v) + (AppLang.isFa ? "٪" : "%")).tag(v) }
+            } label: {
+                Label("Low battery alert", systemImage: "battery.25")
+            }
+        } footer: {
+            JustifiedText("When the Android phone's battery drops to this level, this iPhone tells you.")
         }
     }
 }

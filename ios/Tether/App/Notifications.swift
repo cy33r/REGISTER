@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import Intents
 import TetherCore
@@ -99,6 +100,16 @@ final class Notifications: NSObject, UNUserNotificationCenterDelegate {
         center.add(UNNotificationRequest(identifier: "missed-\(c.id)", content: content, trigger: nil))
     }
 
+    /// REGISTER: the Android phone's battery is low (it carries the SIM: when it dies, calls stop).
+    func showLowBattery(_ level: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Android phone battery low")
+        content.body = Fa.number(level) + (AppLang.isFa ? "٪" : "%") + " · " + String(localized: "Charge it so calls and texts keep coming.")
+        content.sound = .default
+        content.threadIdentifier = "battery"
+        center.add(UNNotificationRequest(identifier: "battery-low", content: content, trigger: nil))
+    }
+
     /// Removes delivered notifications of a conversation (it was read on another device).
     func clearSms(thread: Int64) {
         center.getDeliveredNotifications { [center] list in
@@ -186,5 +197,29 @@ enum AvatarImage {
             }
         }
         return image.pngData() ?? Data()
+    }
+}
+
+
+/// REGISTER: alerts at the chosen level (20 % by default, off with 0) and every 5 % below it, while not charging.
+@MainActor
+final class BatteryAlert: ObservableObject {
+    static let shared = BatteryAlert()
+    private static let levelKey = "register.battery.alert"
+    private var lastAlerted: Int?
+
+    /// 0 (off), 10, 15, 20, … 50.
+    @Published var threshold: Int = UserDefaults.standard.object(forKey: "register.battery.alert") as? Int ?? 20 {
+        didSet { UserDefaults.standard.set(threshold, forKey: Self.levelKey); lastAlerted = nil }
+    }
+
+    func update(level: Int, charging: Bool) {
+        guard threshold > 0, level > 0 else { return }
+        if charging || level > threshold { lastAlerted = nil; return }
+        // At the threshold, then each 5 % step below it, once.
+        let step = level - (level % 5)
+        if let last = lastAlerted, step >= last { return }
+        lastAlerted = step
+        Notifications.shared.showLowBattery(level)
     }
 }

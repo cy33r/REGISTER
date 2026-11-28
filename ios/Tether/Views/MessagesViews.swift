@@ -11,6 +11,9 @@ struct MessagesView: View {
     @State private var composeTo = ""
     @State private var deleting: Conversation?
     @State private var blocking: String?
+    @State private var selected = Set<Int64>()
+    @State private var editMode: EditMode = .inactive
+    @State private var deletingMany = false
 
     @ViewBuilder private func muteButton(_ c: Conversation) -> some View {
         let muted = model.isMuted(c.thread)
@@ -33,7 +36,7 @@ struct MessagesView: View {
 
     @ViewBuilder private var bodyContent: some View {
         NavigationStack(path: $path) {
-            List {
+            List(selection: $selected) {
                 if !search.isEmpty {
                     let hits = searchHits
                     if hits.isEmpty { Text("No results").foregroundStyle(.secondary) }
@@ -48,6 +51,7 @@ struct MessagesView: View {
                 } else {
                     ForEach(model.conversations) { c in
                         NavigationLink(value: c.thread) { ConversationRow(conversation: c) }
+                            .tag(c.thread)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) { deleting = c } label: { Label("Delete", systemImage: "trash") }
                                 muteButton(c).tint(.indigo)
@@ -57,6 +61,15 @@ struct MessagesView: View {
                 }
             }
             .listStyle(.plain)
+            .environment(\.editMode, $editMode)
+            .confirmationDialog(Text("Delete \(Fa.number(selected.count)) conversations?"), isPresented: $deletingMany, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    for t in selected { model.deleteConversation(t) }
+                    selected = []; editMode = .inactive
+                }
+            } message: {
+                Text("This conversation will be deleted from your Android phone and all your devices.")
+            }
             .overlay {
                 if model.conversations.isEmpty && search.isEmpty {
                     EmptyStateView(model.syncing ? "Syncing…" : "No messages",
@@ -85,6 +98,30 @@ struct MessagesView: View {
             .refreshable { model.requestSync() }
             .navigationTitle("Messages")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 14) {
+                        Button(editMode.isEditing ? "Done" : "Select") {
+                            withAnimation { editMode = editMode.isEditing ? .inactive : .active; selected = [] }
+                        }
+                        .disabled(model.conversations.isEmpty)
+                        if !editMode.isEditing {
+                            NavigationLink { StarredView { t in path = [t] } } label: { Image(systemName: "star") }
+                                .accessibilityLabel(Text("Starred"))
+                        }
+                    }
+                }
+                ToolbarItemGroup(placement: .bottomBar) {
+                    if editMode.isEditing {
+                        Button("Mark as Read") {
+                            for t in selected { model.markRead(thread: t) }
+                            selected = []; editMode = .inactive
+                        }
+                        .disabled(selected.isEmpty)
+                        Spacer()
+                        Button("Delete", role: .destructive) { deletingMany = true }
+                            .disabled(selected.isEmpty || !model.linkState.isConnected)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { hideKeyboard(); composing = true } label: { Image(systemName: "square.and.pencil") }
                         .disabled(!model.linkState.isConnected)
@@ -477,6 +514,12 @@ struct Bubble: View {
     @ViewBuilder private func menu(_ p: ParsedMessage) -> some View {
         Button { UIPasteboard.general.string = message.body } label: { Label("Copy", systemImage: "doc.on.doc") }
             .onAppear { hideKeyboard() }
+        // REGISTER: starred texts, kept on this iPhone only.
+        if Starred.shared.ids.contains(message.id) {
+            Button { Starred.shared.toggle(message.id) } label: { Label("Unstar", systemImage: "star.slash") }
+        } else {
+            Button { Starred.shared.toggle(message.id) } label: { Label("Star", systemImage: "star") }
+        }
         ForEach(Array(p.entities.enumerated()), id: \.offset) { _, e in
             switch e.kind {
             case .code(let c):
@@ -632,5 +675,63 @@ private struct StickerPicker: View {
 private extension View {
     @ViewBuilder func presentationDetentsCompat() -> some View {
         presentationDetents([.medium, .large])
+    }
+}
+
+
+/// REGISTER: starred texts (message ids), kept on this iPhone only.
+@MainActor
+final class Starred: ObservableObject {
+    static let shared = Starred()
+    private static let key = "register.starred"
+    @Published private(set) var ids: Set<Int64>
+
+    private init() {
+        ids = Set((UserDefaults.standard.array(forKey: Self.key) as? [NSNumber] ?? []).map(\.int64Value))
+    }
+
+    func toggle(_ id: Int64) {
+        if ids.contains(id) { ids.remove(id) } else { ids.insert(id) }
+        UserDefaults.standard.set(ids.map { NSNumber(value: $0) }, forKey: Self.key)
+    }
+}
+
+/// The starred texts, newest first; a tap opens the conversation.
+struct StarredView: View {
+    @Environment(\.appModel) private var model
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var starred = Starred.shared
+    let open: (Int64) -> Void
+
+    var body: some View { WithPerceptionTracking { bodyContent } }
+
+    @ViewBuilder private var bodyContent: some View {
+        let items = model.data.sms.filter { starred.ids.contains($0.id) }.sorted { $0.date > $1.date }
+        List {
+            ForEach(items, id: \.id) { m in
+                Button { dismiss(); open(m.thread) } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(model.displayName(m.addr)).font(.v(.subheadline).weight(.semibold)).lineLimit(1)
+                            Spacer()
+                            Text(transcriptTime(m.date)).font(.v(.caption)).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Text(m.body).font(.v(.body)).foregroundStyle(.primary).lineLimit(4)
+                    }
+                    .padding(.vertical, 2)
+                }
+                .buttonStyle(.plain)
+                .swipeActions { Button(role: .destructive) { starred.toggle(m.id) } label: { Label("Unstar", systemImage: "star.slash") } }
+            }
+        }
+        .listStyle(.plain)
+        .overlay {
+            if items.isEmpty {
+                EmptyStateView("No starred messages", systemImage: "star",
+                               description: Text("Touch and hold a message, then tap Star."))
+            }
+        }
+        .navigationTitle("Starred")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

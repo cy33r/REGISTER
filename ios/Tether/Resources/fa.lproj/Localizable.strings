@@ -331,3 +331,16 @@
 "Could not reach GitHub. Check the internet." = "به GITHUB وصل نشد. اینترنت را بررسی کنید.";
 "Check every week" = "بررسی خودکار هر هفته";
 "Only GitHub is asked, for the newest version number. Nothing about you is sent." = "فقط شمارهٔ آخرین نسخه از GITHUB پرسیده می‌شود. هیچ اطلاعاتی از شما فرستاده نمی‌شود.";
+"Select" = "انتخاب";
+"Delete (%@)" = "حذف (%@)";
+"Starred" = "ستاره‌دارها";
+"Star" = "ستاره";
+"Unstar" = "برداشتن ستاره";
+"No starred messages" = "پیام ستاره‌داری نیست";
+"Touch and hold a message, then tap Star." = "روی پیام انگشت نگه دارید و «ستاره» را بزنید.";
+"Android phone battery low" = "باتری اندروید کم است";
+"Charge it so calls and texts keep coming." = "آن را شارژ کنید تا تماس‌ها و پیامک‌ها قطع نشوند.";
+"Low battery alert" = "هشدار شارژ کم اندروید";
+"When the Android phone's battery drops to this level, this iPhone tells you." = "وقتی شارژ اندروید به این مقدار برسد، آیفون خبرتان می‌کند.";
+"Delete %@ conversations?" = "%@ گفتگو حذف شود؟";
+"Mark as Read" = "خوانده شد";

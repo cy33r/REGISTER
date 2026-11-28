@@ -8,6 +8,8 @@ struct RecentsView: View {
     @State private var search = ""
     @State private var blocking: String?
     @State private var clearing = false
+    @State private var selected = Set<Int64>()
+    @State private var editMode: EditMode = .inactive
 
     private func message(_ num: String) {
         Router.shared.tab = .messages
@@ -18,44 +20,18 @@ struct RecentsView: View {
 
     @ViewBuilder private var bodyContent: some View {
         NavigationStack {
-            List(entries) { e in
-                HStack(spacing: 12) {
-                    Image(systemName: icon(e.type)).foregroundStyle(e.type == 3 || e.type == 5 ? .red : .secondary).frame(width: 22)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(e.name ?? model.displayName(e.num))
-                            .font(.v(.body).weight(.semibold))
-                            .foregroundStyle(e.type == 3 ? .red : .primary)
-                        HStack(spacing: 6) {
-                            if let sim = model.simName(e.sub) {
-                                Text(sim).font(.v(.caption2)).padding(.horizontal, 5)
-                                    .background(Color(.tertiarySystemFill), in: Capsule())
-                            }
-                            if e.dur > 0 { Text(Fa.duration(Int(e.dur))) }
-                        }
-                        .font(.v(.caption)).foregroundStyle(.secondary)
+            List(selection: $selected) {
+                // REGISTER: a section per day ("Today", "Yesterday", "Mon 24 Nov"), and calls in a row from one number
+                // with the same direction as one line with a count, as the Phone app does.
+                ForEach(days, id: \.title) { day in
+                    Section {
+                        ForEach(day.rows) { g in row(g).tag(g.id) }
+                    } header: {
+                        Text(day.title).font(.v(.footnote).weight(.semibold))
                     }
-                    Spacer()
-                    Text(shortTime(e.date)).font(.v(.caption)).foregroundStyle(.secondary)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture { model.dial(e.num, sub: e.sub) }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    // Like Phone: a swipe deletes the entry at once (from the Android phone and every device).
-                    Button(role: .destructive) { model.deleteRecents([e.id]) } label: { Label("Delete", systemImage: "trash") }
-                    Button { message(e.num) } label: { Label("Message", systemImage: "message") }.tint(.teal)
-                }
-                .contextMenu {
-                    Button { model.dial(e.num, sub: e.sub) } label: { Label("Call", systemImage: "phone") }
-                    Button { message(e.num) } label: { Label("Message", systemImage: "message") }
-                    Button { UIPasteboard.general.string = e.num } label: { Label("Copy", systemImage: "doc.on.doc") }
-                    if model.isBlocked(e.num) {
-                        Button { model.setBlocked(e.num, false) } label: { Label("Unblock this Caller", systemImage: "hand.raised.slash") }
-                    } else {
-                        Button(role: .destructive) { blocking = e.num } label: { Label("Block this Caller", systemImage: "hand.raised") }
-                    }
-                    Button(role: .destructive) { model.deleteRecents([e.id]) } label: { Label("Delete from Recents", systemImage: "trash") }
                 }
             }
+            .environment(\.editMode, $editMode)
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
             .refreshable { model.requestSync() }
@@ -84,8 +60,22 @@ struct RecentsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Clear") { clearing = true }
-                        .disabled(model.data.recents.isEmpty || !model.linkState.isConnected)
+                    if editMode.isEditing {
+                        Button("Delete (\(Fa.number(selected.count)))", role: .destructive) {
+                            let ids = days.flatMap(\.rows).filter { selected.contains($0.id) }.flatMap(\.ids)
+                            model.deleteRecents(ids); selected = []; editMode = .inactive
+                        }
+                        .disabled(selected.isEmpty || !model.linkState.isConnected)
+                    } else {
+                        Button("Clear") { clearing = true }
+                            .disabled(model.data.recents.isEmpty || !model.linkState.isConnected)
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(editMode.isEditing ? "Done" : "Select") {
+                        withAnimation { editMode = editMode.isEditing ? .inactive : .active; selected = [] }
+                    }
+                    .disabled(model.data.recents.isEmpty)
                 }
                 ToolbarItem(placement: .principal) {
                     Picker("", selection: $missedOnly) {
@@ -95,6 +85,93 @@ struct RecentsView: View {
                 }
             }
         }
+    }
+
+
+    private func row(_ g: RecentGroup) -> some View {
+        let e = g.first
+        return Group {
+                HStack(spacing: 12) {
+                    Image(systemName: icon(e.type)).foregroundStyle(e.type == 3 || e.type == 5 ? .red : .secondary).frame(width: 22)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text((e.name ?? model.displayName(e.num)) + (g.count > 1 ? " (\(Fa.number(g.count)))" : ""))
+                            .font(.v(.body).weight(.semibold))
+                            .foregroundStyle(e.type == 3 ? .red : .primary)
+                        HStack(spacing: 6) {
+                            if let sim = model.simName(e.sub) {
+                                Text(sim).font(.v(.caption2)).padding(.horizontal, 5)
+                                    .background(Color(.tertiarySystemFill), in: Capsule())
+                            }
+                            if e.dur > 0 { Text(Fa.duration(Int(e.dur))) }
+                        }
+                        .font(.v(.caption)).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text(shortTime(e.date)).font(.v(.caption)).foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+                // In Select mode a tap selects the line (the List's own selection) instead of calling.
+                .simultaneousGesture(TapGesture().onEnded { if !editMode.isEditing { model.dial(e.num, sub: e.sub) } })
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    // Like Phone: a swipe deletes the entry at once (from the Android phone and every device).
+                    Button(role: .destructive) { model.deleteRecents(g.ids) } label: { Label("Delete", systemImage: "trash") }
+                    Button { message(e.num) } label: { Label("Message", systemImage: "message") }.tint(.teal)
+                }
+                .contextMenu {
+                    Button { model.dial(e.num, sub: e.sub) } label: { Label("Call", systemImage: "phone") }
+                    Button { message(e.num) } label: { Label("Message", systemImage: "message") }
+                    Button { UIPasteboard.general.string = e.num } label: { Label("Copy", systemImage: "doc.on.doc") }
+                    if model.isBlocked(e.num) {
+                        Button { model.setBlocked(e.num, false) } label: { Label("Unblock this Caller", systemImage: "hand.raised.slash") }
+                    } else {
+                        Button(role: .destructive) { blocking = e.num } label: { Label("Block this Caller", systemImage: "hand.raised") }
+                    }
+                    Button(role: .destructive) { model.deleteRecents(g.ids) } label: { Label("Delete from Recents", systemImage: "trash") }
+                }
+                    }
+    }
+
+    /// One line of Recents: a call, or several in a row from one number in the same direction.
+    struct RecentGroup: Identifiable {
+        var first: CallEntry
+        var ids: [Int64]
+        var count: Int { ids.count }
+        var id: Int64 { first.id }
+    }
+
+    private struct Day { let title: String; let rows: [RecentGroup] }
+
+    private var days: [Day] {
+        let cal = Fa.calendar
+        var out: [Day] = []
+        var current: (key: DateComponents, title: String, rows: [RecentGroup])?
+        for e in entries {
+            let d = Date(millis: e.date)
+            let key = cal.dateComponents([.year, .month, .day], from: d)
+            if current?.key != key {
+                if let c = current { out.append(Day(title: c.title, rows: c.rows)) }
+                current = (key, dayTitle(d), [])
+            }
+            let missed = e.type == 3 || e.type == 5
+            if var last = current!.rows.last, last.first.num == e.num,
+               (last.first.type == 3 || last.first.type == 5) == missed, last.first.type == e.type || missed {
+                last.ids.append(e.id); current!.rows[current!.rows.count - 1] = last
+            } else {
+                current!.rows.append(RecentGroup(first: e, ids: [e.id]))
+            }
+        }
+        if let c = current { out.append(Day(title: c.title, rows: c.rows)) }
+        return out
+    }
+
+    private func dayTitle(_ d: Date) -> String {
+        let cal = Fa.calendar
+        if cal.isDateInToday(d) { return String(localized: "Today") }
+        if cal.isDateInYesterday(d) { return String(localized: "Yesterday") }
+        if let days = cal.dateComponents([.day], from: cal.startOfDay(for: d), to: cal.startOfDay(for: Date())).day, days < 7 {
+            return d.formatted(Fa.dateTime.weekday(.wide))
+        }
+        return d.formatted(Fa.dateTime.weekday(.abbreviated).day().month(.wide))
     }
 
     private var entries: [CallEntry] {

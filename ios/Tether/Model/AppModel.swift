@@ -642,6 +642,7 @@ final class AppModel {
                 // Kept in memory; saved with the next real change (a full snapshot write per status was wasted).
                 data.lastStatus = try Control.body(StatusBody.self, from: payload)
                 extensions.peerCaps(data.lastStatus?.caps)   // absent (older Android builds): no extensions
+                if let st = data.lastStatus { BatteryAlert.shared.update(level: st.battery, charging: st.charging) }
             case MsgType.smsBatch:
                 let b = try Control.body(SmsBatch.self, from: payload)
                 let recent = Int64(Date().addingTimeInterval(-6 * 3600).timeIntervalSince1970 * 1000)
