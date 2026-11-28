@@ -14,6 +14,7 @@ struct RootView: View {
         VStack(spacing: 0) {
             ReturnToCallBanner()
             RemoteCallBanner()
+            LinkHealthBanner()
             if model.isPaired || router.tab != .link { StatusStrip() }
             TabView(selection: $router.tab) {
                 RecentsView()
@@ -93,7 +94,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { model.showCallScreen && model.callScreen != nil },
                                               set: { model.showCallScreen = $0 })) {
             // Presented content does not always inherit environment objects: pass them explicitly.
-            InCallView().environment(\.font, .v(.body)).environment(\.locale, Fa.locale).environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
+            InCallView().environment(\.font, .v(.body)).environment(\.locale, Fa.locale).environment(\.layoutDirection, AppLang.current.direction).environment(\.appModel, AppModel.shared).environment(\.router, Router.shared)
         }
         .tint(Color("AccentColor"))
         .task {
@@ -313,6 +314,37 @@ extension View {
                 Spacer()
                 Button("Done") { hideKeyboard() }.fontWeight(.semibold)
             }
+        }
+    }
+}
+
+
+/// REGISTER: a slim bar at the top when the Android phone is far away (weak Bluetooth signal) or the link has been
+/// down for a few seconds, so a call that may not come through is no surprise.
+struct LinkHealthBanner: View {
+    @Environment(\.appModel) private var model
+    var body: some View { WithPerceptionTracking { bodyContent } }
+
+    @ViewBuilder private var bodyContent: some View {
+        if model.isPaired {
+            TimelineView(.periodic(from: .now, by: 2)) { ctx in
+                let down = model.linkDownSince.map { ctx.date.timeIntervalSince($0) > 8 } ?? false
+                if down || (model.linkState.isConnected && model.weakSignal) {
+                    HStack(spacing: 8) {
+                        Image(systemName: down ? "antenna.radiowaves.left.and.right.slash" : "wifi.exclamationmark")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(down ? LocalizedStringKey("Not connected to the Android phone") : LocalizedStringKey("The Android phone is far away"))
+                            .font(.v(.footnote).weight(.semibold))
+                        Spacer(minLength: 0)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(down ? Color.red.opacity(0.9) : Color.orange.opacity(0.95))
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: model.weakSignal)
         }
     }
 }

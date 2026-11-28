@@ -72,6 +72,19 @@ final class AppModel {
     @PerceptionIgnored lazy var audio = CallAudio(model: self, link: link)
 
     private(set) var linkState: TetherLink.State = .unpaired
+
+    /// REGISTER: the link's signal (RSSI, dBm, smoothed) and whether it is weak enough that calls may break up.
+    private(set) var signalDbm: Int?
+    private(set) var weakSignal = false
+    /// Since when the paired link has been down (nil while connected): the banner waits a few seconds before saying so.
+    private(set) var linkDownSince: Date?
+
+    func signalRead(_ v: Int) {
+        let s = signalDbm.map { ($0 * 2 + v) / 3 } ?? v
+        signalDbm = s
+        // Hysteresis: weak below -88 dBm, fine again above -82 dBm.
+        if weakSignal { if s > -82 { weakSignal = false } } else if s < -88 { weakSignal = true }
+    }
     private(set) var data: Snapshot
     var status: StatusBody? { data.lastStatus }
     var lastError: String?
@@ -128,6 +141,7 @@ final class AppModel {
         extensionPort = LinkExtensionPort(link: link)
         link.delegate = LinkBridge.shared
         link.log = { msg in NSLog("[link] %@", msg); LinkJournal.shared.add(msg) }
+        link.onSignal = { v in DispatchQueue.main.async { MainActor.assumeIsolatedCompat { AppModel.shared.signalRead(v) } } }
         rebuildIndex()
         registerExtensions()
         #if DEBUG
@@ -584,6 +598,8 @@ final class AppModel {
     func linkChanged(_ s: TetherLink.State) {
         let wasConnected = linkState.isConnected
         linkState = s
+        if s.isConnected { linkDownSince = nil } else if wasConnected || linkDownSince == nil { linkDownSince = Date() }
+        if !s.isConnected { signalDbm = nil; weakSignal = false }
         AppEvents.shared.add("link state: \(s.reportName)")
         if case .connected(let t) = s { extensionPort.transport = t }
         if s.isConnected && !wasConnected {

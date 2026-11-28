@@ -123,7 +123,10 @@ struct TetherApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @Environment(\.scenePhase) private var phase
 
-    init() { AppFont.applyAppearance() }
+    @AppStorage(AppLang.key) private var lang = AppLang.fa.rawValue
+    @AppStorage(AppTheme.key) private var theme = AppTheme.system.rawValue
+
+    init() { AppLang.install(); AppFont.applyAppearance() }
 
     var body: some Scene {
         WindowGroup {
@@ -133,9 +136,14 @@ struct TetherApp: App {
     }
 
     private var content: some View {
-        RootView()
+        let l = AppLang(rawValue: lang) ?? .fa
+        return RootView()
+            .id(l)   // a new language rebuilds every screen, bars and tabs included
             .environment(\.font, .v(.body))
-            .environment(\.locale, Fa.locale)
+            .environment(\.locale, l.locale)
+            .environment(\.layoutDirection, l.direction)
+            .onAppear { AppTheme.apply() }
+            .onChangeCompat(of: theme) { _ in AppTheme.apply() }
             .environment(\.appModel, AppModel.shared)
             .environment(\.router, Router.shared)
             .onOpenURL { Router.shared.open(url: $0) }

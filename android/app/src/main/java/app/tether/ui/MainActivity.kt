@@ -55,6 +55,10 @@ class MainActivity : Activity() {
     private lateinit var app: TetherApp
     private lateinit var root: LinearLayout
     private var advanced = false
+    /** REGISTER: Persian (right to left, Persian digits) or English (capitals, a touch smaller and spaced out). */
+    private val isFa by lazy { UiPrefs.isFa(this) }
+    private val dir get() = if (isFa) View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
+    private fun sized(sp: Float) = if (isFa) sp else sp * 0.92f
     private val main = Handler(Looper.getMainLooper())
     private var qrUntil = 0L
     private var dialerRequestMessage: Int? = null
@@ -73,9 +77,11 @@ class MainActivity : Activity() {
         Manifest.permission.ANSWER_PHONE_CALLS,
     )).toTypedArray()
 
+    override fun attachBaseContext(base: android.content.Context) { super.attachBaseContext(UiPrefs.wrap(base)) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.decorView.layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL   // REGISTER: Persian, right to left
+        window.decorView.layoutDirection = if (UiPrefs.isFa(this)) android.view.View.LAYOUT_DIRECTION_RTL else android.view.View.LAYOUT_DIRECTION_LTR   // REGISTER: Persian, right to left
         app = application as TetherApp
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(24), dp(16), dp(24)) }
         setContentView(ScrollView(this).apply { addView(root); setBackgroundColor(color(R.color.background)) })
@@ -160,7 +166,7 @@ class MainActivity : Activity() {
         root.removeAllViews()
         root.addView(TextView(this).apply {
             text = getString(R.string.app_name); textSize = 26f; setTypeface(typeface, Typeface.BOLD); setTextColor(color(R.color.text))
-            textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+            textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
             setPadding(dp(4), 0, dp(4), 0)
         })
         root.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.muted, 13f).apply { setPadding(dp(4), 0, dp(4), dp(14)) })
@@ -276,7 +282,7 @@ class MainActivity : Activity() {
                     MicPath.Setting.OPEN to R.string.mic_choice_open)) {
                 group.addView(RadioButton(this).apply {
                     id = View.generateViewId(); this.text = fa(getString(text)); textSize = 15f; setTextColor(color(R.color.text))
-                    textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+                    textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
                     isChecked = choice == mic
                     // A click sets it; on the one already chosen it also forgets what the redirect modes did here, so they are tried anew.
                     setOnClickListener { Thread { app.hub.audio.setMic(choice); app.hub.pushStatus() }.start() }
@@ -360,6 +366,13 @@ class MainActivity : Activity() {
         val help = card(getString(R.string.section_help))
         help.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
         help.addView(button(getString(R.string.report_title), full = true) { ReportUi.send(this) { PhoneReport.build(app) } })
+
+        // Language and look: chosen here, whatever the phone's own settings are.
+        val look = card(getString(R.string.section_language) + " · " + getString(R.string.section_theme))
+        look.addView(segmented(listOf(UiPrefs.FA to getString(R.string.lang_fa), UiPrefs.EN to getString(R.string.lang_en)),
+            UiPrefs.lang(this)) { UiPrefs.setLang(this, it) })
+        look.addView(segmented(listOf("system" to getString(R.string.theme_system), "light" to getString(R.string.theme_light),
+            "dark" to getString(R.string.theme_dark)), UiPrefs.theme(this)) { UiPrefs.setTheme(this, it) })
 
         // About: the version, and updates from this project's GitHub Releases (only when asked, or once a day if on).
         val about = card(getString(R.string.section_about))
@@ -456,22 +469,27 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun color(id: Int) = getColor(id)
 
+    /** An iPhone-style grouped section: a quiet heading above a rounded card. */
     private fun card(title: String): LinearLayout {
+        root.addView(label(title.uppercase(), R.color.muted, 13f).apply {
+            setPadding(dp(18), dp(6), dp(18), dp(6)); setTypeface(typeface, Typeface.BOLD)
+        })
         val c = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(14), dp(16), dp(14))
-            background = GradientDrawable().apply { setColor(color(R.color.surface)); cornerRadius = dp(16).toFloat() }
-            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) }
+            setPadding(dp(16), dp(12), dp(16), dp(14))
+            background = GradientDrawable().apply { setColor(color(R.color.surface)); cornerRadius = dp(14).toFloat() }
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(18) }
+            elevation = dp(1).toFloat()
         }
-        c.addView(label(title.uppercase(), R.color.accent, 12f).apply { setTypeface(typeface, Typeface.BOLD); letterSpacing = 0.08f })
         root.addView(c)
         return c
     }
 
     /** Every text right to left (Persian), even a line that starts with a Latin word, with Persian digits. */
     private fun label(t: String, colorId: Int, size: Float = 15f) = TextView(this).apply {
-        text = fa(t); textSize = size; setTextColor(color(colorId)); setPadding(0, dp(3), 0, dp(3))
-        textDirection = View.TEXT_DIRECTION_RTL; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+        text = fa(t); textSize = sized(size); setTextColor(color(colorId)); setPadding(0, dp(3), 0, dp(3))
+        textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+        if (!isFa) letterSpacing = 0.03f
         setLineSpacing(0f, 1.15f)
         // Longer notes justified, so every line of a paragraph is the same width.
         if (size <= 14f) justificationMode = android.text.Layout.JUSTIFICATION_MODE_INTER_WORD
@@ -480,7 +498,8 @@ class MainActivity : Activity() {
 
     /** A pill button; [full]: as wide as its card. Laid out under its text, never beside it. */
     private fun button(t: String, secondary: Boolean = false, full: Boolean = false, onClick: () -> Unit) = Button(this).apply {
-        text = fa(t); isAllCaps = false; textSize = 15f
+        text = fa(t); isAllCaps = false; textSize = sized(15f)
+        if (!isFa) letterSpacing = 0.05f
         setTextColor(if (secondary) color(R.color.accent) else color(R.color.on_accent))
         background = GradientDrawable().apply {
             cornerRadius = dp(22).toFloat()
@@ -490,6 +509,29 @@ class MainActivity : Activity() {
         layoutParams = LinearLayout.LayoutParams(if (full) -1 else -2, dp(44)).apply { topMargin = dp(10) }
         setPadding(dp(20), 0, dp(20), 0)
         setOnClickListener { onClick() }
+    }
+
+    /** A row of equal buttons, the chosen one filled (like an iPhone segmented control). */
+    private fun segmented(options: List<Pair<String, String>>, chosen: String, pick: (String) -> Unit): View {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(3), dp(3), dp(3), dp(3))
+            background = GradientDrawable().apply { cornerRadius = dp(12).toFloat(); setColor(color(R.color.fill)) }
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) }
+        }
+        for ((key, title) in options) {
+            val on = key == chosen
+            row.addView(TextView(this).apply {
+                text = title; textSize = sized(14f); gravity = Gravity.CENTER
+                setTypeface(typeface, if (on) Typeface.BOLD else Typeface.NORMAL)
+                setTextColor(color(R.color.text))
+                if (on) background = GradientDrawable().apply { cornerRadius = dp(10).toFloat(); setColor(color(R.color.surface_raised)) }
+                setPadding(dp(6), dp(9), dp(6), dp(9))
+                layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+                setOnClickListener { if (!on) pick(key) }
+            })
+        }
+        return row
     }
 
     /** A small text button for a row (unpair). */
@@ -520,7 +562,7 @@ class MainActivity : Activity() {
      * Persian digits for what the user reads. A number touching a Latin letter or a dot, colon, slash or dash
      * (A73, 5G, 127.0.0.1, beta.2, SIM 2's carrier codes) is left as it is.
      */
-    private fun fa(t: String): String = FA_DIGITS.replace(t) { m -> m.value.map { '۰' + (it - '0') }.joinToString("") }
+    private fun fa(t: String): String = if (!isFa) t else FA_DIGITS.replace(t) { m -> m.value.map { '۰' + (it - '0') }.joinToString("") }
 }
 
 internal fun dialerRoleMessage(held: Boolean, resultCode: Int): Int? = when {

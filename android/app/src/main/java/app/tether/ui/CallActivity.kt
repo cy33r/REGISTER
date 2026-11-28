@@ -25,9 +25,11 @@ class CallActivity : Activity() {
     private var lookedUp: String? = null
     private var lookedUpName: String? = null
 
+    override fun attachBaseContext(base: android.content.Context) { super.attachBaseContext(UiPrefs.wrap(base)) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.decorView.layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL   // REGISTER: Persian, right to left
+        window.decorView.layoutDirection = if (UiPrefs.isFa(this)) android.view.View.LAYOUT_DIRECTION_RTL else android.view.View.LAYOUT_DIRECTION_LTR   // REGISTER: Persian, right to left
         // The manifest's showWhenLocked / turnScreenOn exist from Android 8.1; on 8.0 the window flags do the same.
         @Suppress("DEPRECATION")
         if (android.os.Build.VERSION.SDK_INT < 27) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
@@ -113,9 +115,11 @@ private fun Activity.displayNumber(n: String): String {
 
 /** ACTION_DIAL handler (required for the phone-app role): a number field and a Call button. */
 class DialerActivity : Activity() {
+    override fun attachBaseContext(base: android.content.Context) { super.attachBaseContext(UiPrefs.wrap(base)) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.decorView.layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL   // REGISTER: Persian, right to left
+        window.decorView.layoutDirection = if (UiPrefs.isFa(this)) android.view.View.LAYOUT_DIRECTION_RTL else android.view.View.LAYOUT_DIRECTION_LTR   // REGISTER: Persian, right to left
         val app = application as TetherApp
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(24), dp(48), dp(24), dp(24)); setBackgroundColor(getColor(R.color.background))

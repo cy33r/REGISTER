@@ -23,6 +23,7 @@ class TetherApp : Application() {
     val prefs by lazy { getSharedPreferences("app", Context.MODE_PRIVATE) }
 
     override fun onCreate() {
+        app.tether.ui.UiPrefs.init(this)
         super.onCreate()
         keys = Keys(this)
         sms = SmsRepo(this)

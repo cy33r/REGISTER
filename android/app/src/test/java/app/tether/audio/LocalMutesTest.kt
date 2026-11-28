@@ -61,7 +61,9 @@ class LocalMutesTest {
         // Issue #13 / #25 (Galaxy A73 / A52s, SM7325): the far end heard itself through the open microphone. With the
         // in-call music injection Qualcomm's HAL mutes only the mic device; the A73's self-test heard telephony_tx at the
         // same level with the mute on. Only with the user's "Muted", and checked until it held once.
-        for (s in listOf(Silence.QUALCOMM, Silence.SAMSUNG_QUALCOMM)) {
+        // REGISTER: Samsung's Qualcomm phones use the device mutes on every route (checked on the Galaxy A73).
+        assertTrue(LocalMutes.canMute(Silence.SAMSUNG_QUALCOMM, "intercept"))
+        for (s in listOf(Silence.QUALCOMM)) {
             assertTrue("$s", LocalMutes.canMute(s, "telephony_tx"))
             assertFalse("$s: not with the interception track (Redmi Note 8)", LocalMutes.canMute(s, "intercept"))
             assertFalse("$s", LocalMutes.canMute(s, "policy_mix"))

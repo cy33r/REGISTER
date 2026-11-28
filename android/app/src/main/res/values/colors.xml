@@ -5,6 +5,8 @@
     <color name="on_accent">#FFFFFF</color>
     <color name="background">#F2F2F7</color>
     <color name="surface">#FFFFFF</color>
+    <color name="fill">#E4E4EA</color>
+    <color name="surface_raised">#FFFFFF</color>
     <color name="text">#1C1C1E</color>
     <color name="muted">#6C6C70</color>
     <color name="ok">#248A3D</color>

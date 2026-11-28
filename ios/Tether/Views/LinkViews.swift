@@ -220,6 +220,8 @@ struct LinkView: View {
                     }
                 }
 
+                AppearanceSection()
+
                 AboutSection()
                 #if DEBUG
                 DeveloperSection()

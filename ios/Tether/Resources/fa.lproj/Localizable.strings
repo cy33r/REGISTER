@@ -110,7 +110,7 @@
 "Mobile data" = "داده‌ی همراه";
 "Wi-Fi hotspot" = "هات‌اسپات وای‌فای";
 "Bluetooth tethering" = "اشتراک اینترنت با بلوتوث";
-"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth." = "هات‌اسپات را روشن کنید و در تنظیمات › وای‌فای به آن وصل شوید تا از اینترنت گوشی اندرویدی استفاده کنید. اشتراک با بلوتوث کندتر است: بعد از روشن کردن، در تنظیمات › بلوتوث روی گوشی اندرویدی بزنید.";
+"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth." = "برای اینترنت اندروید، هات‌اسپات را روشن کنید و در تنظیمات › WI-FI به آن وصل شوید. اشتراک با بلوتوث کندتر است.";
 "The Android phone did not answer." = "گوشی اندرویدی پاسخی نداد.";
 "Renewal" = "تمدید";
 "App expires" = "انقضای برنامه";
@@ -147,7 +147,7 @@
 "Blocked Contacts" = "مخاطبان مسدود";
 "Kept on the Android phone and shared by all your devices." = "روی گوشی اندروید نگه داشته می‌شود و در همهٔ دستگاه‌هایتان یکسان است.";
 "No Blocked Contacts" = "مخاطب مسدودی نیست";
-"This is the Android phone's own block list: it refuses these calls and messages itself, whichever device you use." = "این فهرست مسدودهای خود گوشی اندروید است: گوشی این تماس‌ها و پیام‌ها را خودش رد می‌کند، با هر دستگاهی که کار کنید.";
+"This is the Android phone's own block list: it refuses these calls and messages itself, whichever device you use." = "فهرست مسدودهای خود اندروید. این تماس‌ها و پیامک‌ها همان‌جا رد می‌شوند.";
 "Tether rejects these calls and does not forward these messages to your devices." = "‏REGISTER این تماس‌ها را رد می‌کند و این پیام‌ها را به دستگاه‌هایتان نمی‌فرستد.";
 "The Android phone is not connected." = "گوشی اندروید وصل نیست. آن را نزدیک نگه دارید و بخش «پیوند» را باز کنید.";
 "Not deleted" = "حذف نشد";
@@ -158,7 +158,7 @@
 "1. Join the Android phone's hotspot in Settings › Wi-Fi." = "۱. در تنظیمات › WI-FI به هات‌اسپات گوشی اندروید وصل شوید.";
 "2. Tap ⓘ next to it › Configure Proxy › Automatic." = "۲. روی ⓘ کنار آن بزنید › پیکربندی پراکسی › خودکار.";
 "3. Paste this URL and tap Save:" = "۳. این نشانی را بچسبانید و ذخیره را بزنید:";
-"Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL." = "یک بار کافی است: با «اشتراک VPN» روشن، برنامه‌های این آیفون روی هات‌اسپات از VPN گوشی استفاده می‌کنند و با خاموش بودنش مستقیم وصل می‌شوند. اگر نشانی هات‌اسپات عوض شد، نشانی را به‌روز کنید.";
+"Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL." = "فقط یک بار لازم است. با «اشتراک VPN» روشن، آیفون از VPN اندروید استفاده می‌کند.";
 "Turn on the Wi-Fi hotspot to see the address to use." = "هات‌اسپات WI-FI را روشن کنید تا نشانی نمایش داده شود.";
 "Copied" = "کپی شد";
 
@@ -166,9 +166,9 @@
 "Link log" = "گزارش اتصال";
 "No events yet." = "هنوز رویدادی نیست.";
 "VPN on the Android phone" = "‏VPN روی گوشی اندروید";
-"Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN." = "اشتراک اینترنت با بلوتوث خودبه‌خود از VPN استفاده نمی‌کند: آیفون برای آن تنظیم پراکسی ندارد. برای VPN از هات‌اسپات استفاده کنید.";
-"Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server %@:%@ there and turn it on." = "فقط یک برنامهٔ پراکسی روی این آیفون (مثلاً V2BOX) می‌تواند از راه بلوتوث از آن استفاده کند: در آن یک سرور SOCKS5 با نشانی %1$@:%2$@ بسازید و روشنش کنید.";
-"Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app." = "‏VPN را در برنامهٔ خودش روی گوشی اندروید روشن کنید. هات‌اسپات و اشتراک بلوتوث گوشی از آن عبور نمی‌کنند (اندروید ترافیک اشتراکی را مستقیم می‌فرستد)، برای همین «اشتراک VPN» یک پراکسی روی گوشی اجرا می‌کند که ترافیکش از VPN می‌گذرد. این آیفون از راه هات‌اسپات (یک بار تنظیم پراکسی) و از راه بلوتوث فقط با یک برنامهٔ پراکسی می‌تواند از آن استفاده کند.";
+"Bluetooth tethering does not use the VPN on its own: iPhone has no proxy setting for it. Use the hotspot for the VPN." = "اشتراک بلوتوث از VPN رد نمی‌شود. برای VPN از هات‌اسپات استفاده کنید.";
+"Only a proxy app on this iPhone (for example V2Box) can use it over Bluetooth: add a SOCKS5 server %@:%@ there and turn it on." = "از راه بلوتوث فقط با یک برنامهٔ پراکسی (مثل V2BOX) می‌شود: سرور SOCKS5 با نشانی %1$@:%2$@ بسازید.";
+"Turn the VPN on in its own app on the Android phone. The phone's hotspot and Bluetooth tethering do not go through it (Android sends tethered traffic straight out), so Share VPN runs a proxy on the phone whose traffic does. This iPhone can use it over the hotspot (one-time proxy setting); over Bluetooth tethering only with a proxy app." = "‏VPN را در برنامه‌اش روی اندروید روشن کنید. با «اشتراک VPN» آیفون هم از راه هات‌اسپات از آن استفاده می‌کند.";
 "No service" = "بدون آنتن";
 "Favourites" = "علاقه‌مندی‌ها";
 "All Contacts" = "همهٔ مخاطبان";
@@ -178,9 +178,9 @@
 "Search name or number" = "جستجوی نام یا شماره";
 "Airplane mode" = "حالت هواپیما";
 "Network · %@" = "شبکه · %@";
-"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it." = "برای استفاده از اینترنت گوشی اندروید، هات‌اسپات را روشن کنید و در تنظیمات › WI-FI به آن وصل شوید. اشتراک بلوتوث کندتر است: پس از روشن کردن، در تنظیمات › بلوتوث روی گوشی اندروید بزنید. حالت هواپیما بلوتوث را روشن نگه می‌دارد تا این اتصال برقرار بماند؛ اگر اتصال تا ۹۰ ثانیه برنگردد، خودش خاموش می‌شود. هات‌اسپات و اشتراک بلوتوث پس از آن دوباره روشن می‌شوند.";
+"Turn on the hotspot and join it in Settings › Wi-Fi to use the Android phone's internet here. Bluetooth tethering is slower: after switching it on, tap the Android phone in Settings › Bluetooth. Airplane mode keeps Bluetooth on so this link stays up; if the link is not back within 90 seconds it switches itself off. The hotspot and Bluetooth tethering come back on after it." = "برای اینترنت اندروید، هات‌اسپات را روشن کنید و در تنظیمات › WI-FI به آن وصل شوید. اشتراک با بلوتوث کندتر است. حالت هواپیما این اتصال را قطع نمی‌کند.";
 "On the Android phone, open Tether and tap Pair iPhone, then scan the code with the Camera or here (or paste it). Calls, messages, contacts and call history stay between your devices; there is no server." = "در اندروید REGISTER را باز کنید، «جفت کردن آیفون» را بزنید و کد را اسکن کنید.";
-"Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days." = "قبل از این تاریخ برنامه را در ابزاری که با آن نصبش کردید (SIDESTORE، ALTSTORE یا SIDELOADLY) رفرش کنید. امضای حساب رایگان اپل ۷ روز اعتبار دارد.";
+"Refresh the app before this date in the tool you installed it with (SideStore, AltStore or Sideloadly). A free Apple account's signature lasts 7 days." = "قبل از این تاریخ، برنامه را با همان ابزاری که نصبش کردید دوباره امضا کنید.";
 "Move here" = "انتقال به اینجا";
 "On %@" = "روی %@";
 "another device" = "دستگاهی دیگر";
@@ -209,7 +209,7 @@
 "Silent" = "بی‌صدا";
 "Not a carrier code (like *123#)" = "کد اپراتور معتبر نیست (مثل ‎*123#‎)";
 "Silent needs Do Not Disturb access for Tether on the Android phone." = "برای حالت بی‌صدا، REGISTER روی گوشی اندرویدی باید به «مزاحم نشوید» دسترسی داشته باشد.";
-"Carrier codes are sent from the Android phone's SIM and may cost money. Find phone rings the Android phone loudly for up to 30 seconds, until it is unlocked or you switch it off." = "کدهای اپراتور از سیم‌کارت گوشی اندرویدی ارسال می‌شوند و ممکن است هزینه داشته باشند. «پیدا کردن گوشی» گوشی اندرویدی را تا ۳۰ ثانیه بلند زنگ می‌زند، تا وقتی قفلش باز شود یا آن را خاموش کنید.";
+"Carrier codes are sent from the Android phone's SIM and may cost money. Find phone rings the Android phone loudly for up to 30 seconds, until it is unlocked or you switch it off." = "کدهای اپراتور از سیم‌کارت اندروید فرستاده می‌شوند و ممکن است هزینه داشته باشند. «پیدا کردن گوشی» اندروید را تا ۳۰ ثانیه بلند زنگ می‌زند.";
 
 /* Numbers from other apps (tel: links, Shortcuts, the Phone app's Recents) */
 "Call %@?" = "با %@ تماس گرفته شود؟";
@@ -265,10 +265,10 @@
 "Calls and texts stay on your devices and travel over an encrypted Bluetooth link." = "تماس‌ها و پیامک‌ها فقط بین دو گوشی خودتان و با بلوتوث رمزنگاری‌شده جابه‌جا می‌شوند.";
 "Pair with %@?" = "با %@ جفت شود؟";
 "the Android phone" = "گوشی اندروید";
-"This replaces the current pairing and removes the synced data from this iPhone." = "این کار جفت‌سازی فعلی را جایگزین می‌کند و داده‌های همگام‌شده را از این آیفون پاک می‌کند.";
+"This replaces the current pairing and removes the synced data from this iPhone." = "جفت قبلی پاک می‌شود و اطلاعات همگام‌شده از این آیفون حذف می‌شود.";
 "Calls, texts, contacts and call history of that phone will come to this iPhone over Bluetooth." = "تماس‌ها، پیامک‌ها، مخاطبین و سابقهٔ تماس آن گوشی از راه بلوتوث به این آیفون می‌آید.";
 "That pairing code is incomplete. Show a new code on the Android phone and scan it again." = "این کد جفت‌سازی ناقص است. روی گوشی اندروید کد تازه‌ای نشان دهید و دوباره اسکن کنید.";
-"Paste or type a pairing code you have as text (tether1:… or tether://pair?…). The Android phone shows it as a QR code: scanning is quicker." = "کد جفت‌سازی را که به صورت متن دارید بچسبانید یا تایپ کنید (tether1:… یا tether://pair?…). گوشی اندروید آن را به صورت کد QR نشان می‌دهد: اسکن سریع‌تر است.";
+"Paste or type a pairing code you have as text (tether1:… or tether://pair?…). The Android phone shows it as a QR code: scanning is quicker." = "کد جفت کردن را بچسبانید یا تایپ کنید (tether1:… یا tether://pair?…). اسکن کردن کد QR سریع‌تر است.";
 
 /* This iPhone's microphone (issue #14) */
 "Microphone off for Tether" = "میکروفون برای REGISTER خاموش است. در تنظیمات › حریم خصوصی › میکروفون روشنش کنید.";
@@ -288,7 +288,7 @@
 "You can still pair by entering the code manually." = "برای جفت‌سازی می‌توانید کد را دستی وارد کنید.";
 "Pairing code" = "کد جفت‌سازی";
 "Paste pairing code" = "جای‌گذاری کد جفت‌سازی";
-"Paste a pairing link or type the code from Tether on your Android phone." = "پیوند جفت‌سازی را جای‌گذاری کنید یا کدی را که REGISTER روی گوشی اندرویدی نشان می‌دهد وارد کنید.";
+"Paste a pairing link or type the code from Tether on your Android phone." = "لینک جفت کردن را بچسبانید یا کدی را که REGISTER در اندروید نشان می‌دهد وارد کنید.";
 "Send a problem report" = "ارسال گزارش مشکل";
 "Problem report" = "گزارش مشکل";
 "Building the report…" = "در حال ساخت گزارش…";
@@ -304,9 +304,22 @@
 "Opens the releases page in Safari. The app itself sends nothing to the internet." = "صفحهٔ نسخه‌ها در سافاری باز می‌شود. خود برنامه چیزی به اینترنت نمی‌فرستد.";
 
 /* From the original 1.2.6–1.3.0 */
-"No call audio right now: the Android phone is not on Wi-Fi, so it cannot start its audio helper (Wireless debugging needs Wi-Fi). Connect it to Wi-Fi, or set up TCP debugging on it (Setup)." = "فعلاً صدای تماس نیست: اندروید به WI-FI وصل نیست. آن را به WI-FI وصل کنید یا اشکال‌زدایی TCP را روشن کنید.";
-"Call audio stops if the Android phone leaves Wi-Fi. To keep it, turn on USB debugging there: Tether › Call audio › Turn on USB debugging." = "اگر اندروید از WI-FI جدا شود صدای تماس قطع می‌شود. برای جلوگیری، در اندروید: REGISTER › صدای تماس › روشن کردن اشکال‌زدایی USB.";
+"No call audio right now: the Android phone is not on Wi-Fi, so it cannot start its audio helper (Wireless debugging needs Wi-Fi). Connect it to Wi-Fi, or set up TCP debugging on it (Setup)." = "فعلاً صدای تماس نیست: اندروید به WI-FI وصل نیست. آن را به WI-FI وصل کنید.";
+"Call audio stops if the Android phone leaves Wi-Fi. To keep it, turn on USB debugging there: Tether › Call audio › Turn on USB debugging." = "اگر اندروید از WI-FI جدا شود صدای تماس قطع می‌شود. برای جلوگیری، اشکال‌زدایی USB را در اندروید روشن کنید.";
 "Keep both phones nearby. Scan it here, or point this iPhone's Camera at it and tap Open in Cellular. You can also enter the code manually from the scanner." = "دو گوشی را نزدیک هم نگه دارید. کد را همین‌جا اسکن کنید، یا با دوربین آیفون اسکن کنید و دکمهٔ زرد REGISTER را بزنید.";
 "Busy" = "مشغول";
 "No call audio: turn on Wi-Fi on the Android phone for a moment." = "صدای تماس نیست: WI-FI اندروید را یک لحظه روشن کنید.";
 "Unplugging the USB cable stops call audio: the Android phone restarts USB debugging and, without Wi-Fi, the audio helper does not come back. After unplugging, turn on Wi-Fi there for a few seconds." = "جدا کردن کابل USB صدای تماس را قطع می‌کند. بعد از جدا کردن، WI-FI اندروید را چند ثانیه روشن کنید.";
+
+/* REGISTER 1.1.0 */
+"Language" = "زبان";
+"Appearance" = "ظاهر";
+"Language and look" = "زبان و ظاهر";
+"Like the phone" = "مثل گوشی";
+"Light" = "روشن";
+"Dark" = "تیره";
+"Not connected to the Android phone" = "به اندروید وصل نیست";
+"The Android phone is far away" = "اندروید دور است؛ ممکن است تماس قطع شود";
+"Stickers" = "استیکر";
+"Tap one to send it. It goes as a normal text message." = "روی یکی بزنید تا فرستاده شود. مثل یک پیامک معمولی می‌رود.";
+"Some parts change after you close and reopen the app." = "بعضی بخش‌ها بعد از بستن و باز کردن دوباره برنامه عوض می‌شوند.";

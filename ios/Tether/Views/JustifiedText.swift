@@ -19,7 +19,7 @@ struct JustifiedText: UIViewRepresentable {
         let l = UILabel()
         l.numberOfLines = 0
         l.adjustsFontForContentSizeCategory = true
-        l.semanticContentAttribute = .forceRightToLeft
+        l.semanticContentAttribute = AppLang.isFa ? .forceRightToLeft : .forceLeftToRight
         l.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         l.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return l
@@ -28,7 +28,7 @@ struct JustifiedText: UIViewRepresentable {
     func updateUIView(_ l: UILabel, context: Context) {
         let p = NSMutableParagraphStyle()
         p.alignment = .justified
-        p.baseWritingDirection = .rightToLeft
+        p.baseWritingDirection = AppLang.isFa ? .rightToLeft : .leftToRight
         p.lineSpacing = 2
         let font = UIFontMetrics(forTextStyle: .footnote).scaledFont(for: AppFont.ui(size))
         l.attributedText = NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: color, .paragraphStyle: p])

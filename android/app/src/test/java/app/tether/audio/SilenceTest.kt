@@ -23,7 +23,8 @@ class SilenceTest {
     @Test fun samsungOnQualcommHoldsTheVolumeInsteadOfMutingTheStream() {
         // Issue #13 (Galaxy A73, One UI 8, 1.2.7): with the stream muted the earpiece still played at 15 of 15, and the
         // muted stream read index 0, so the app's lowest-volume hold never acted. The volume hold alone quiets it.
-        assertFalse(Silence.SAMSUNG_QUALCOMM.voiceStream)
+        // REGISTER: the A73 is quieted with Qualcomm's own device mutes plus the stream mute, kept on by a keeper thread.
+        assertTrue(Silence.SAMSUNG_QUALCOMM.voiceStream)
         assertFalse(Silence.SAMSUNG.voiceStream)
         assertFalse(Silence.MEDIATEK.voiceStream)
         assertTrue(Silence.QUALCOMM.voiceStream && Silence.OTHER.voiceStream)

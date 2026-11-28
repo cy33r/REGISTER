@@ -79,8 +79,10 @@ extension Font {
 /// REGISTER: numbers and dates as a Persian reader expects them: Persian digits and the Persian (Solar Hijri) calendar.
 /// Phone numbers, codes and the version are plain strings and are not touched.
 enum Fa {
-    static let locale = Locale(identifier: "fa_IR")
-    static let calendar: Calendar = { var c = Calendar(identifier: .persian); c.locale = locale; return c }()
+    static var locale: Locale { AppLang.current.locale }
+    static var calendar: Calendar {
+        var c = Calendar(identifier: AppLang.isFa ? .persian : .gregorian); c.locale = locale; return c
+    }
 
     /// Like `Date.formatted(date:time:)`, in Persian.
     static func style(date: Date.FormatStyle.DateStyle? = nil, time: Date.FormatStyle.TimeStyle? = nil) -> Date.FormatStyle {

@@ -42,6 +42,9 @@ public final class TetherLink: NSObject {
     public let queue: DispatchQueue
     public private(set) var state: State = .unpaired { didSet { if state != oldValue { delegate?.link(self, didChange: state) } } }
     public var log: (String) -> Void = { print("[link] \($0)") }
+    /// REGISTER: the connection's signal strength (RSSI, dBm), read every 4 s while a session is up (on `queue`).
+    public var onSignal: ((Int) -> Void)?
+    private var signalTimer: DispatchSourceTimer?
 
     private let store: IdentityStore
     private var central: CBCentralManager!
@@ -512,7 +515,20 @@ public final class TetherLink: NSObject {
         }
     }
 
+    private func startSignalReads() {
+        guard signalTimer == nil else { return }
+        let t = DispatchSource.makeTimerSource(queue: queue)
+        t.schedule(deadline: .now() + 2, repeating: 4)
+        t.setEventHandler { [weak self] in
+            guard let self, self.session != nil, let p = self.peripheral, p.state == .connected else { return }
+            p.readRSSI()
+        }
+        t.resume()
+        signalTimer = t
+    }
+
     private func startKeepalive() {
+        startSignalReads()
         keepalive?.cancel()
         let t = DispatchSource.makeTimerSource(queue: queue)
         t.schedule(deadline: .now() + 25, repeating: 25)
@@ -600,6 +616,12 @@ extension TetherLink: CBCentralManagerDelegate {
 }
 
 extension TetherLink: CBPeripheralDelegate {
+    public func peripheral(_ p: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        guard error == nil, p == peripheral else { return }
+        let v = RSSI.intValue
+        if v < 0 && v > -127 { onSignal?(v) }
+    }
+
     /// The Android phone changed its GATT database (Tether's service restarted): if we were still setting up, look again.
     public func peripheral(_ p: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
         guard invalidatedServices.contains(where: { $0.uuid == TetherUUID.service }) else { return }

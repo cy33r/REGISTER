@@ -172,6 +172,7 @@ struct ThreadView: View {
     @State private var confirmBlock = false
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focused: Bool
+    @State private var stickers = false
 
     private var address: String { model.messages(thread: thread).last?.addr ?? "" }
 
@@ -214,7 +215,9 @@ struct ThreadView: View {
         let name = model.displayName(address)
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 0) {
+                // REGISTER: a plain stack for ordinary conversations. A lazy one, anchored at the bottom, sometimes drew
+                // nothing at all for long texts (a bank's) until the screen was opened again (iOS 17/18).
+                TranscriptStack(lazy: msgs.count > 400) {
                     ForEach(rows(msgs)) { r in
                         if let h = r.header {
                             Text(h).font(.v(.caption2).weight(.medium)).foregroundStyle(.secondary)
@@ -234,6 +237,11 @@ struct ThreadView: View {
                 .padding(.horizontal, 12).padding(.vertical, 8)
             }
             .bottomAnchoredCompat(proxy, last: msgs.last?.id)
+            .task(id: thread) {
+                // Once laid out, show the newest message (also when the stack's first pass measured it short).
+                try? await Task.sleep(nanoseconds: 120_000_000)
+                if let last = model.messages(thread: thread).last { proxy.scrollTo(last.id, anchor: .bottom) }
+            }
             .scrollDismissesKeyboard(.interactively)
             .onChangeCompat(of: msgs.count) { _ in
                 if let last = msgs.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
@@ -309,6 +317,18 @@ struct ThreadView: View {
         HStack(alignment: .bottom, spacing: 8) {
             SimPicker(sub: Binding(get: { sub }, set: { sub = $0; model.setPreferredSim($0, for: address) }))
                 .padding(.bottom, 3)
+            Button { focused = false; stickers = true } label: {
+                Image(systemName: "face.smiling").font(.system(size: 22)).foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 6)
+            .accessibilityLabel(Text("Stickers"))
+            .sheet(isPresented: $stickers) {
+                StickerPicker { e in
+                    stickers = false
+                    model.sendSms(to: address, body: e, sub: sub)
+                }
+                .presentationDetentsCompat()
+            }
             HStack(alignment: .bottom, spacing: 4) {
                 TextField("Text Message · SMS", text: $text, axis: .vertical)
                     .lineLimit(1...6)
@@ -391,6 +411,11 @@ struct Bubble: View {
         VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
             HStack(spacing: 0) {
                 if mine { Spacer(minLength: 60) }
+                if Stickers.isJumbo(message.body) {
+                    // Only emoji: drawn large without a bubble, as Messages does (a "sticker").
+                    Text(message.body).font(.system(size: Stickers.jumboSize(message.body)))
+                        .contextMenu { menu(rich.parsed) }
+                } else {
                 Text(rich.text)
                     // The text's own direction (Persian / English) decides its alignment, whatever the app language.
                     .environment(\.layoutDirection, rich.parsed.rightToLeft ? .rightToLeft : .leftToRight)
@@ -402,6 +427,7 @@ struct Bubble: View {
                     .contentShape(.contextMenuPreview, BubbleShape(mine: onRight, tail: false))
                     .environment(\.openURL, OpenURLAction { url in handle(url) })
                     .contextMenu { menu(rich.parsed) }
+                }
                 if message.box == 5 {
                     Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red).padding(.leading, 6)
                 }
@@ -536,5 +562,75 @@ struct ComposeView: View {
             if out.count > 6 { break }
         }
         return out
+    }
+}
+
+
+/// The transcript's stack: plain (every bubble measured at once, so it never draws empty) unless the conversation is
+/// very long.
+private struct TranscriptStack<Content: View>: View {
+    let lazy: Bool
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if lazy { LazyVStack(spacing: 0, content: content) } else { VStack(spacing: 0, content: content) }
+    }
+}
+
+
+/// REGISTER: "stickers" for texts. An SMS carries only text, so a sticker is an emoji sent as a normal SMS and drawn
+/// large on both iPhones and in Messages-style apps.
+enum Stickers {
+    static let all: [String] = [
+        "😀", "😂", "🥹", "😍", "🥰", "😘", "😎", "🤩", "🥳", "😇", "🤗", "🤔",
+        "😴", "😭", "😡", "🥺", "😱", "🤯", "😅", "🙃", "😉", "😋", "🤭", "🫡",
+        "👍", "👎", "👏", "🙏", "💪", "🤝", "👋", "✌️", "🤞", "👌", "🫶", "🙌",
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "💔", "💯", "🔥", "✨", "🎉",
+        "🌹", "🌷", "🌸", "☕️", "🍰", "🎂", "🎁", "⭐️", "🌙", "☀️", "🇮🇷", "🕊️",
+    ]
+
+    /// One to three emoji and nothing else.
+    static func isJumbo(_ body: String) -> Bool {
+        let t = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty, t.count <= 3 else { return false }
+        return t.allSatisfy { ch in
+            ch.unicodeScalars.contains { $0.properties.isEmojiPresentation } ||
+                (ch.unicodeScalars.first?.properties.isEmoji == true && ch.unicodeScalars.count > 1)
+        }
+    }
+
+    static func jumboSize(_ body: String) -> CGFloat {
+        switch body.trimmingCharacters(in: .whitespacesAndNewlines).count { case 1: 56; case 2: 46; default: 38 }
+    }
+}
+
+private struct StickerPicker: View {
+    let send: (String) -> Void
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 6)
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(Stickers.all, id: \.self) { e in
+                        Button { send(e) } label: {
+                            Text(e).font(.system(size: 40)).frame(maxWidth: .infinity, minHeight: 54)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(16)
+                JustifiedText("Tap one to send it. It goes as a normal text message.")
+                    .padding(.horizontal, 20).padding(.bottom, 20)
+            }
+            .navigationTitle("Stickers")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder func presentationDetentsCompat() -> some View {
+        presentationDetents([.medium, .large])
     }
 }
