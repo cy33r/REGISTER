@@ -142,7 +142,7 @@ struct TetherApp: App {
             .environment(\.font, .v(.body))
             .environment(\.locale, l.locale)
             .environment(\.layoutDirection, l.direction)
-            .onAppear { AppTheme.apply() }
+            .onAppear { AppTheme.apply(); UpdateCheck.shared.checkIfDue() }
             .onChangeCompat(of: theme) { _ in AppTheme.apply() }
             .environment(\.appModel, AppModel.shared)
             .environment(\.router, Router.shared)

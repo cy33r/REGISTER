@@ -52,9 +52,9 @@ struct LinkView: View {
                         LabeledContent("Battery", value: "\(s.battery)%" + (s.charging ? " ⚡︎" : ""))
                         ForEach(s.sims) { sim in
                             LabeledContent {
-                                HStack(spacing: 6) { SimStatus(sim: sim, showName: false); Text(sim.carrier) }
+                                HStack(spacing: 6) { SimStatus(sim: sim, showName: false); Text(sim.carrier.uppercased()) }
                             } label: {
-                                Text("SIM \(sim.slot + 1) · \(sim.name)")
+                                Text("SIM \(sim.slot + 1) · \(sim.name.uppercased())")
                             }
                         }
                         LabeledContent("Default phone app", value: s.dialer ? String(localized: "Tether") : String(localized: "Not set"))
@@ -65,7 +65,7 @@ struct LinkView: View {
                         if s.sims.count > 1, let current = model.net?.dataSub {
                             Picker(selection: Binding(get: { current }, set: { model.setDataSim($0) })) {
                                 ForEach(s.sims) { sim in
-                                    Text("SIM \(sim.slot + 1) · \(sim.name)").tag(sim.sub)
+                                    Text("SIM \(sim.slot + 1) · \(sim.name.uppercased())").tag(sim.sub)
                                 }
                             } label: {
                                 Label {
@@ -94,7 +94,7 @@ struct LinkView: View {
                                 } label: {
                                     Label {
                                         HStack(spacing: 8) {
-                                            Text("Network · \(sim.name)")
+                                            Text("Network · \(sim.name.uppercased())")
                                             if model.netPending == "rat\(sim.slot)" { ProgressView().controlSize(.small) }
                                         }
                                     } icon: { Image(systemName: "cellularbars") }
@@ -439,13 +439,11 @@ struct AboutSection: View {
                 }
             }
             .padding(.vertical, 4)
-            Link(destination: Self.releases) {
-                Label("Check for updates", systemImage: "arrow.down.circle")
-            }
+            UpdateRows()
         } header: {
             Text("About")
         } footer: {
-            JustifiedText("Opens the releases page in Safari. The app itself sends nothing to the internet.")
+            JustifiedText("Only GitHub is asked, for the newest version number. Nothing about you is sent.")
         }
     }
 }
@@ -770,7 +768,7 @@ struct PhoneToolsSection: View {
                 }
                 if status.sims.count > 1 {
                     Picker("SIM", selection: Binding(get: { chosenSub ?? -1 }, set: { sub = $0 })) {
-                        ForEach(status.sims) { sim in Text("SIM \(sim.slot + 1) · \(sim.name)").tag(sim.sub) }
+                        ForEach(status.sims) { sim in Text("SIM \(sim.slot + 1) · \(sim.name.uppercased())").tag(sim.sub) }
                     }
                 }
                 if model.ussdPending {

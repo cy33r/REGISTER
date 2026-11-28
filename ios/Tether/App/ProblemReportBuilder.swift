@@ -48,7 +48,7 @@ final class AppEvents: @unchecked Sendable {
             ],
             linkLog: LinkJournal.shared.text.split(separator: "\n", omittingEmptySubsequences: true).map(String.init),
             events: AppEvents.shared.newestFirst,
-            literals: [model.peerName])
+            literals: [model.peerNameRaw, model.peerName])
     }
 
     static func appLine() -> String {

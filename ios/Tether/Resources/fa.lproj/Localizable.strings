@@ -156,7 +156,7 @@
 "Share VPN" = "اشتراک VPN";
 "Use it on this iPhone" = "استفاده روی این آیفون";
 "1. Join the Android phone's hotspot in Settings › Wi-Fi." = "۱. در تنظیمات › WI-FI به هات‌اسپات گوشی اندروید وصل شوید.";
-"2. Tap ⓘ next to it › Configure Proxy › Automatic." = "۲. روی ⓘ کنار آن بزنید › پیکربندی پراکسی › خودکار.";
+"2. Tap ⓘ next to it › Configure Proxy › Automatic." = "۲. روی Ⓘ کنار آن بزنید › پیکربندی پراکسی › خودکار.";
 "3. Paste this URL and tap Save:" = "۳. این نشانی را بچسبانید و ذخیره را بزنید:";
 "Once is enough: with Share VPN on, apps on this iPhone use the phone's VPN over the hotspot; with it off they go direct. If the hotspot address ever changes, update the URL." = "فقط یک بار لازم است. با «اشتراک VPN» روشن، آیفون از VPN اندروید استفاده می‌کند.";
 "Turn on the Wi-Fi hotspot to see the address to use." = "هات‌اسپات WI-FI را روشن کنید تا نشانی نمایش داده شود.";
@@ -323,3 +323,11 @@
 "Stickers" = "استیکر";
 "Tap one to send it. It goes as a normal text message." = "روی یکی بزنید تا فرستاده شود. مثل یک پیامک معمولی می‌رود.";
 "Some parts change after you close and reopen the app." = "بعضی بخش‌ها بعد از بستن و باز کردن دوباره برنامه عوض می‌شوند.";
+"Version %@ is out" = "نسخهٔ %@ آمده است";
+"Download it, then sign and install it with your tool (Feather). Your data and pairing stay." = "دانلودش کنید و با ابزار خودتان (FEATHER) امضا و نصب کنید. اطلاعات و جفت شدن حفظ می‌شود.";
+"Download the new version" = "دانلود نسخهٔ جدید";
+"Open Feather" = "باز کردن FEATHER";
+"You have the newest version" = "جدیدترین نسخه را دارید";
+"Could not reach GitHub. Check the internet." = "به GITHUB وصل نشد. اینترنت را بررسی کنید.";
+"Check every week" = "بررسی خودکار هر هفته";
+"Only GitHub is asked, for the newest version number. Nothing about you is sent." = "فقط شمارهٔ آخرین نسخه از GITHUB پرسیده می‌شود. هیچ اطلاعاتی از شما فرستاده نمی‌شود.";

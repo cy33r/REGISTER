@@ -8,6 +8,8 @@ struct RootView: View {
 
     var body: some View { WithPerceptionTracking { bodyContent } }
 
+    @ObservedObject private var updates = UpdateCheck.shared
+
     @ViewBuilder private var bodyContent: some View {
         @Perception.Bindable var router = router
         @Perception.Bindable var model = model
@@ -33,6 +35,7 @@ struct RootView: View {
                     .tag(Router.Tab.messages)
                 LinkView()
                     .tabItem { Label("Link", systemImage: "antenna.radiowaves.left.and.right") }
+                    .badge(updates.hasNews ? Text(verbatim: "1") : nil)
                     .tag(Router.Tab.link)
             }
         }
@@ -201,7 +204,7 @@ struct SimStatus: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            if showName { Text(sim.name).font(.v(.caption2)).lineLimit(1) }
+            if showName { Text(sim.name.uppercased()).font(.v(.caption2)).lineLimit(1) }
             if sim.hasService {
                 SignalBars(level: sim.signal)
                 if let n = sim.net { Text(n).font(.v(.caption2).weight(.semibold)) }
@@ -268,7 +271,7 @@ struct SimPicker: View {
                     Button {
                         sub = sim.sub
                     } label: {
-                        Label("\(sim.name) · \(sim.carrier)", systemImage: sub == sim.sub ? "checkmark" : "simcard")
+                        Label("\(sim.name.uppercased()) · \(sim.carrier.uppercased())", systemImage: sub == sim.sub ? "checkmark" : "simcard")
                     }
                 }
                 .onAppear { hideKeyboard() }   // the menu must not open under / over the keyboard
@@ -285,7 +288,7 @@ struct SimPicker: View {
 
     private var label: String {
         guard let sim = model.sims.first(where: { $0.sub == sub }) else { return String(localized: "SIM") }
-        return sim.name.isEmpty ? "SIM \(sim.slot + 1)" : sim.name
+        return sim.name.isEmpty ? "SIM \(sim.slot + 1)" : sim.name.uppercased()
     }
 }
 

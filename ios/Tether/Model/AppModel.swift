@@ -180,7 +180,9 @@ final class AppModel {
     }
 
     var isPaired: Bool { identity.peerKey != nil }
-    var peerName: String { identity.peerName ?? "Android" }
+    var peerName: String { peerNameRaw.uppercased() }   // REGISTER: shown in capitals
+    /// The name as the Android phone sent it (problem reports redact this exact text).
+    var peerNameRaw: String { identity.peerName ?? "Android" }
 
     // MARK: derived data
 
@@ -239,7 +241,7 @@ final class AppModel {
     /// The SIM's own name ("Personal", "Work"), only when there are two SIMs (with one it says nothing).
     func simName(_ sub: Int?) -> String? {
         guard sims.count > 1, let sub, let sim = sims.first(where: { $0.sub == sub }) else { return nil }
-        return sim.name.isEmpty ? String(localized: "SIM \(sim.slot + 1)") : sim.name
+        return sim.name.isEmpty ? String(localized: "SIM \(sim.slot + 1)") : sim.name.uppercased()
     }
 
     func markRead(thread: Int64) {
