@@ -25,6 +25,16 @@ class TetherApp : Application() {
     override fun onCreate() {
         app.tether.ui.UiPrefs.init(this)
         super.onCreate()
+        // REGISTER: a crash leaves its cause in the link log (and so in problem reports) before Android ends the app.
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            runCatching {
+                app.tether.link.LinkLog.init(this)
+                app.tether.link.LinkLog.add("app crashed: ${e.javaClass.simpleName}: ${e.message?.take(160)} at " +
+                    e.stackTrace.take(5).joinToString(" < ") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" })
+            }
+            previous?.uncaughtException(t, e)
+        }
         keys = Keys(this)
         sms = SmsRepo(this)
         contacts = ContactsRepo(this)

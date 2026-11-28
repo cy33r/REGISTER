@@ -36,7 +36,8 @@ struct MessagesView: View {
 
     @ViewBuilder private var bodyContent: some View {
         NavigationStack(path: $path) {
-            List(selection: $selected) {
+            // Selection only in Select mode: with it on, a tap selected the row instead of opening the conversation.
+            List(selection: editMode.isEditing ? $selected : nil) {
                 if !search.isEmpty {
                     let hits = searchHits
                     if hits.isEmpty { Text("No results").foregroundStyle(.secondary) }

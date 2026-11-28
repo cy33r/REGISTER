@@ -97,8 +97,8 @@
     <string name="audio_needs_android11">CALL AUDIO NEEDS ANDROID 11 OR LATER. HERE, CALL SOUND STAYS ON THIS PHONE.</string>
     <string name="audio_android11_12">ON ANDROID 11 AND 12, CALL AUDIO WORKS ONLY IF THIS PHONE ALLOWS IT.</string>
     <string name="audio_blocked">THIS PHONE GAVE REGISTER NO CALL AUDIO, SO CALL SOUND STAYS ON THIS PHONE FOR NOW. IF NORMAL CALLS ARE SILENT TOO, RESTART THE PHONE ONCE.</string>
-    <string name="call_screen_bridged">SHOW THIS PHONE\'S CALL SCREEN WHILE THE CALL IS ON THE IPHONE</string>
-    <string name="call_screen_bridged_note">TURN OFF TO KEEP THE CALL SCREEN HIDDEN HERE WHILE YOU TALK ON THE IPHONE.</string>
+    <string name="call_screen_bridged">ALSO OPEN THE CALL SCREEN ON ANDROID</string>
+    <string name="call_screen_bridged_note">OFF: WHILE YOU TALK ON THE IPHONE, THE CALL SHOWS ONLY ON THE IPHONE.</string>
     <string name="audio_needs_android13">CALL AUDIO NEEDS ANDROID 13 OR LATER. HERE, CALL SOUND STAYS ON THIS PHONE.</string>
     <string name="mic_mute_on">THIS PHONE\'S MICROPHONE IS MUTED DURING CALLS.</string>
     <string name="mic_mute_incall_music">MUTING IS SAFE ON THIS PHONE; REGISTER CHECKS EVERY CALL THAT YOUR VOICE STILL GETS THROUGH.</string>
@@ -185,4 +185,7 @@
     <string name="section_about_update">ABOUT AND UPDATES</string>
     <string name="badge_new">NEW</string>
     <string name="action_back">BACK</string>
+    <string name="reset_title">RESET THE APP</string>
+    <string name="reset_action">RESET</string>
+    <string name="reset_note">LIKE A FRESH INSTALL: PAIRING, SETTINGS AND PERMISSIONS ARE CLEARED AND THE APP CLOSES. OPEN IT AGAIN AND DO THE SETUP.</string>
 </resources>

@@ -39,8 +39,9 @@ enum AppLang: String, CaseIterable, Identifiable {
     private static func apply(_ l: AppLang) {
         bundle = load(l)
         UserDefaults.standard.set([l.rawValue], forKey: "AppleLanguages")
+        // Bars follow the language; list cells are left to SwiftUI's layout direction (forcing every UIView cut the
+        // separators between rows short).
         let dir: UISemanticContentAttribute = l == .fa ? .forceRightToLeft : .forceLeftToRight
-        UIView.appearance().semanticContentAttribute = dir
         UINavigationBar.appearance().semanticContentAttribute = dir
         UITabBar.appearance().semanticContentAttribute = dir
     }

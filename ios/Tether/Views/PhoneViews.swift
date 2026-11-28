@@ -20,7 +20,7 @@ struct RecentsView: View {
 
     @ViewBuilder private var bodyContent: some View {
         NavigationStack {
-            List(selection: $selected) {
+            List(selection: editMode.isEditing ? $selected : nil) {
                 // REGISTER: a section per day ("Today", "Yesterday", "Mon 24 Nov"), and calls in a row from one number
                 // with the same direction as one line with a count, as the Phone app does.
                 ForEach(days, id: \.title) { day in

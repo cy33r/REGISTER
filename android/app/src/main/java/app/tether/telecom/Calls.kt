@@ -22,6 +22,7 @@ import app.tether.R
 import app.tether.TetherApp
 import app.tether.core.CallInfo
 import app.tether.core.OldAndroid
+import app.tether.link.LinkLog
 import app.tether.ui.CallActivity
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -246,7 +247,10 @@ class TetherInCallService : InCallService() {
             .setCategory(Notification.CATEGORY_CALL)
             .setOngoing(true)
         if (showScreen) b.setFullScreenIntent(popup, true)
-        if (Build.VERSION.SDK_INT >= 31) {
+        // REGISTER: Android refuses a CallStyle notification without a full-screen intent (IllegalArgumentException: the
+        // whole app died the moment a call started, with "Show this phone's call screen" off). Without the pop-up, the
+        // plain call notification with the same buttons is used.
+        if (Build.VERSION.SDK_INT >= 31 && showScreen) {
             val person = Person.Builder().setName(who).setImportant(true).build()
             b.setStyle(if (info.state == "ringing") {
                 Notification.CallStyle.forIncomingCall(person, action("decline", info.cid, 2), action("answer", info.cid, 3))
@@ -262,8 +266,8 @@ class TetherInCallService : InCallService() {
                 b.addAction(Notification.Action.Builder(null, label, action(a, info.cid, code)).build())
             }
         }
-        val n = b.build()
-        getSystemService(NotificationManager::class.java).notify(NOTIF_CALL, n)
+        runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_CALL, b.build()) }
+            .onFailure { android.util.Log.w("Tether", "call notification refused", it); LinkLog.add("call notification refused: ${it.javaClass.simpleName}") }
     }
 
     private fun action(a: String, cid: String, code: Int) = PendingIntent.getActivity(this, code,

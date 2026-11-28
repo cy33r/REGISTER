@@ -49,15 +49,15 @@ class ReportProvider : ContentProvider() {
 
     companion object {
         const val DIR = "reports"
-        private val NAME = Regex("tether-report-[0-9-]+\\.txt")
+        private val NAME = Regex("REGISTER-(report|link-log)-[0-9-]+\\.txt")
 
         fun authority(ctx: Context) = ctx.packageName + ".report"
 
         /** Writes [text] as a new report file (older ones are removed) and returns it. */
-        fun write(ctx: Context, text: String, now: Long = System.currentTimeMillis()): File {
+        fun write(ctx: Context, text: String, now: Long = System.currentTimeMillis(), kind: String = "report"): File {
             val dir = File(ctx.cacheDir, DIR).apply { mkdirs() }
             dir.listFiles()?.forEach { it.delete() }
-            val name = "tether-report-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(now)) + ".txt"
+            val name = "REGISTER-$kind-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(now)) + ".txt"
             return File(dir, name).apply { writeText(text) }
         }
 

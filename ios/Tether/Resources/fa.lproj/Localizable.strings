@@ -344,3 +344,7 @@
 "When the Android phone's battery drops to this level, this iPhone tells you." = "وقتی شارژ اندروید به این مقدار برسد، آیفون خبرتان می‌کند.";
 "Delete %@ conversations?" = "%@ گفتگو حذف شود؟";
 "Mark as Read" = "خوانده شد";
+"Reset the app" = "بازنشانی کامل برنامه";
+"Reset the app?" = "برنامه بازنشانی شود؟";
+"Reset" = "بازنشانی";
+"Like a fresh install: unpairs, deletes the synced data and puts every setting back. The app then closes; open it again." = "مثل نصب تازه: جفت شدن و اطلاعات همگام‌شده پاک می‌شود و همهٔ تنظیمات به حالت اول برمی‌گردد. برنامه بسته می‌شود؛ دوباره بازش کنید.";

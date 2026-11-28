@@ -97,8 +97,8 @@
     <string name="audio_needs_android11">صدای تماس به اندروید ۱۱ یا جدیدتر نیاز دارد؛ روی این گوشی صدا روی همین گوشی می‌ماند.</string>
     <string name="audio_android11_12">در اندروید ۱۱ و ۱۲ صدای تماس فقط اگر گوشی اجازه بدهد کار می‌کند.</string>
     <string name="audio_blocked">این گوشی صدای تماس را به REGISTER نداد؛ فعلاً صدا روی همین گوشی است. اگر تماس‌های عادی هم بی‌صدا شد، گوشی را یک بار ری‌استارت کنید.</string>
-    <string name="call_screen_bridged">نمایش صفحهٔ تماس این گوشی وقتی تماس روی آیفون است</string>
-    <string name="call_screen_bridged_note">خاموشش کنید تا وقتی با آیفون حرف می‌زنید، صفحهٔ تماس اینجا باز نشود.</string>
+    <string name="call_screen_bridged">صفحهٔ تماس روی اندروید هم باز شود</string>
+    <string name="call_screen_bridged_note">خاموش: وقتی با آیفون حرف می‌زنید، تماس فقط روی آیفون دیده می‌شود.</string>
     <string name="audio_needs_android13">صدای تماس به اندروید ۱۳ یا جدیدتر نیاز دارد؛ روی این گوشی صدا روی همین گوشی می‌ماند.</string>
     <string name="mic_mute_on">میکروفون این گوشی در تماس بی‌صدا می‌شود.</string>
     <string name="mic_mute_incall_music">روی این گوشی بی‌صدا کردن امن است و REGISTER در هر تماس بررسی می‌کند صدای شما قطع نشود.</string>
@@ -185,4 +185,7 @@
     <string name="section_about_update">درباره و آپدیت</string>
     <string name="badge_new">جدید</string>
     <string name="action_back">بازگشت</string>
+    <string name="reset_title">بازنشانی کامل برنامه</string>
+    <string name="reset_action">بازنشانی</string>
+    <string name="reset_note">مثل نصب تازه: جفت شدن، تنظیمات و اجازه‌ها پاک می‌شوند و برنامه بسته می‌شود. بعد دوباره بازش کنید و راه‌اندازی را انجام دهید.</string>
 </resources>

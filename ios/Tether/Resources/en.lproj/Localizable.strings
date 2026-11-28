@@ -315,3 +315,7 @@
 "When the Android phone's battery drops to this level, this iPhone tells you." = "WHEN THE ANDROID PHONE'S BATTERY DROPS TO THIS LEVEL, THIS IPHONE TELLS YOU.";
 "Delete %@ conversations?" = "DELETE %@ CONVERSATIONS?";
 "Mark as Read" = "MARK AS READ";
+"Reset the app" = "RESET THE APP";
+"Reset the app?" = "RESET THE APP?";
+"Reset" = "RESET";
+"Like a fresh install: unpairs, deletes the synced data and puts every setting back. The app then closes; open it again." = "LIKE A FRESH INSTALL: UNPAIRS, DELETES THE SYNCED DATA AND PUTS EVERY SETTING BACK. THE APP THEN CLOSES; OPEN IT AGAIN.";

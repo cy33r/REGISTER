@@ -413,8 +413,9 @@ class MainActivity : Activity() {
             }
         }
         // The phone's own call screen while a client has the call (issue #13): shown unless the owner turns it off.
-        audio.addView(android.widget.CheckBox(this).apply {
-            text = getString(R.string.call_screen_bridged); textSize = 15f; setTextColor(color(R.color.text))
+        audio.addView(android.widget.Switch(this).apply {
+            text = fa(getString(R.string.call_screen_bridged)); textSize = sized(15f); setTextColor(color(R.color.text))
+            textDirection = dir; setPadding(0, dp(12), 0, dp(4))
             isChecked = app.prefs.getBoolean(Hub.PREF_CALL_SCREEN, true)
             setOnCheckedChangeListener { _, on -> app.prefs.edit().putBoolean(Hub.PREF_CALL_SCREEN, on).apply() }
         })
@@ -445,6 +446,18 @@ class MainActivity : Activity() {
         }
         adv.addView(button(getString(R.string.action_selftest), secondary = true, full = true) { Thread { app.hub.selftest() }.start() })
         adv.addView(button(getString(R.string.link_log), secondary = true, full = true) { showLinkLog() })
+
+        // REGISTER: back to a fresh install (pairing, settings, permissions; Android ends the app afterwards).
+        val reset = card(null)
+        reset.addView(label(getString(R.string.reset_note), R.color.muted, 13f))
+        reset.addView(button(getString(R.string.reset_title), full = true, danger = true) {
+            AlertDialog.Builder(this).setTitle(R.string.reset_title).setMessage(R.string.reset_note)
+                .setPositiveButton(R.string.reset_action) { _, _ ->
+                    runCatching { app.hub.conns.forEach { it.close("reset") } }
+                    getSystemService(android.app.ActivityManager::class.java).clearApplicationUserData()
+                }
+                .setNegativeButton(android.R.string.cancel, null).show()
+        })
     }
 
     private fun lookSection(look: LinearLayout) {
@@ -492,9 +505,15 @@ class MainActivity : Activity() {
         }
         AlertDialog.Builder(this).setTitle(R.string.link_log).setView(ScrollView(this).apply { addView(view) })
             .setPositiveButton(R.string.action_share) { _, _ ->
-                val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                    .putExtra(Intent.EXTRA_SUBJECT, "REGISTER link log").putExtra(Intent.EXTRA_TEXT, text)
-                runCatching { startActivity(Intent.createChooser(send, getString(R.string.link_log))) }
+                // REGISTER: as a .txt file, like the problem report (a long text pasted into a chat gets cut up).
+                runCatching {
+                    val file = app.tether.report.ReportProvider.write(this, text, kind = "link-log")
+                    val uri = app.tether.report.ReportProvider.uri(this, file)
+                    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
+                        .putExtra(Intent.EXTRA_SUBJECT, "REGISTER link log").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    send.clipData = android.content.ClipData.newRawUri(file.name, uri)
+                    startActivity(Intent.createChooser(send, getString(R.string.link_log)))
+                }
             }
             .setNeutralButton(R.string.action_copy) { _, _ ->
                 getSystemService(android.content.ClipboardManager::class.java)
@@ -576,13 +595,13 @@ class MainActivity : Activity() {
     }
 
     /** A pill button; [full]: as wide as its card. Laid out under its text, never beside it. */
-    private fun button(t: String, secondary: Boolean = false, full: Boolean = false, onClick: () -> Unit) = Button(this).apply {
+    private fun button(t: String, secondary: Boolean = false, full: Boolean = false, danger: Boolean = false, onClick: () -> Unit) = Button(this).apply {
         text = fa(t); isAllCaps = false; textSize = sized(15f)
         if (!isFa) letterSpacing = 0.05f
         setTextColor(if (secondary) color(R.color.accent) else color(R.color.on_accent))
         background = GradientDrawable().apply {
             cornerRadius = dp(22).toFloat()
-            if (secondary) setStroke(dp(1), color(R.color.accent)) else setColor(color(R.color.accent))
+            if (secondary) setStroke(dp(1), color(R.color.accent)) else setColor(color(if (danger) R.color.bad else R.color.accent))
         }
         stateListAnimator = null
         layoutParams = LinearLayout.LayoutParams(if (full) -1 else -2, dp(44)).apply { topMargin = dp(10) }

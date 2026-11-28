@@ -2,6 +2,7 @@ import AVFoundation
 import Perception
 import SwiftUI
 import TetherCore
+import UserNotifications
 
 struct LinkView: View {
     @Environment(\.appModel) private var model
@@ -248,6 +249,14 @@ struct LinkView: View {
             #endif
             }
             .navigationTitle("Link")
+            // REGISTER: the keyboard (carrier codes, proxy address) goes away on a scroll or with Done.
+            .scrollDismissesKeyboard(.immediately)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { hideKeyboard() }
+                }
+            }
             .navigationDestination(isPresented: $reporting) { ProblemReportView() }
             .onAppear { model.refreshNet() }
             .onChangeCompat(of: model.linkState.isConnected) { up in if up { model.refreshNet() } }
@@ -399,6 +408,7 @@ struct DeveloperSection: View {
 /// REGISTER: the technical options, out of the way of everyday use.
 struct AdvancedView: View {
     @Environment(\.appModel) private var model
+    @State private var confirmReset = false
     var body: some View { WithPerceptionTracking { bodyContent } }
 
     @ViewBuilder private var bodyContent: some View {
@@ -1171,5 +1181,22 @@ struct BatteryAlertSection: View {
         } footer: {
             JustifiedText("When the Android phone's battery drops to this level, this iPhone tells you.")
         }
+    }
+}
+
+
+/// REGISTER: back to a fresh install: unpaired, no synced data, every setting at its default; then the app closes.
+@MainActor
+enum AppReset {
+    static func run(_ model: AppModel) {
+        model.unpair()
+        if let id = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: id) }
+        UserDefaults.standard.synchronize()
+        LinkJournal.shared.clear()
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        UIApplication.shared.applicationIconBadgeNumber = 0
+        // A short moment so the unpair and the writes finish, then close (iOS has no restart; the user opens it again).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { exit(0) }
     }
 }

@@ -169,4 +169,7 @@ final class LinkJournal: @unchecked Sendable {
     }
 
     var text: String { q.sync { lines.reversed().joined(separator: "\n") } }
+
+    /// REGISTER: empties the log (app reset).
+    func clear() { q.sync { lines.removeAll(); try? FileManager.default.removeItem(at: url) } }
 }
