@@ -9,7 +9,8 @@
   the release's `SHA256SUMS` and the installed app's signing key, and hands it to Android's installer, which asks
   before it installs. Optional **Check once a day** (when the app opens). No server and no account; Google Play's
   in-app updates do not apply, Tether is not on Play (#19). The Android client now has the internet permission, used
-  only for this. The iPhone app is not changed: SideStore and AltStore already update it from the project's source.
+  only for this. The iPhone app is not changed: SideStore and AltStore already update it from the project's source. Thanks
+  @amirhesamabdi.
 
 ## 1.2.10 — 2026-11-28
 
