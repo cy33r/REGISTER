@@ -40,6 +40,7 @@ import app.tether.link.Hub
 import app.tether.link.LinkLog
 import app.tether.link.LinkService
 import app.tether.report.PhoneReport
+import app.tether.report.ReportProvider
 import app.tether.report.ReportUi
 import app.tether.telecom.CallRegistry
 import app.tether.update.UpdateUi
@@ -507,8 +508,8 @@ class MainActivity : Activity() {
             .setPositiveButton(R.string.action_share) { _, _ ->
                 // REGISTER: as a .txt file, like the problem report (a long text pasted into a chat gets cut up).
                 runCatching {
-                    val file = app.tether.report.ReportProvider.write(this, text, kind = "link-log")
-                    val uri = app.tether.report.ReportProvider.uri(this, file)
+                    val file = ReportProvider.write(this, text, kind = "link-log")
+                    val uri = ReportProvider.uri(this, file)
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
                         .putExtra(Intent.EXTRA_SUBJECT, "REGISTER link log").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     send.clipData = android.content.ClipData.newRawUri(file.name, uri)
