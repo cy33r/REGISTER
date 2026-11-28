@@ -34,6 +34,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Link › Check for updates (#19) only: the latest release and SHA256SUMS from GitHub. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Link › Check for updates (#19): handing a verified update to Android's installer; the user confirms it. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".ClientApp"
@@ -146,5 +150,8 @@
             android:authorities="${applicationId}.report"
             android:exported="false"
             android:grantUriPermissions="true" />
+
+        <!-- The package installer's answer to an update session (needs the user, installed, or failed). -->
+        <receiver android:name=".update.InstallReceiver" android:exported="false" />
     </application>
 </manifest>

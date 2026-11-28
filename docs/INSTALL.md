@@ -64,6 +64,19 @@ key: to move from one of those to 1.2.0, uninstall the old app first (your pairi
    - Android 8, 9 and 10 have no Wireless debugging: use the TCP mode described in [SETUP.md](SETUP.md#tcp-debugging-android-8-to-10-or-no-wi-fi)
      (one `adb tcpip 5555` from a computer after every restart).
 
+### Updating the Android apps
+
+Both Android apps can update themselves from the project's GitHub Releases (there is no Google Play version). In the
+Android app open the **Help** card; in the Android client open **Link › This phone**. Tap **Check for updates**, then
+**Update to 1.x.y**: DownloadManager fetches the new APK, Tether checks it against the release's `SHA256SUMS` and
+against the signing key of the installed app, and Android's installer asks you before it installs. The first time,
+Android asks whether Tether may install apps: allow it, come back and tap **Install the update** again. Pairing and
+settings are kept.
+
+Nothing is checked unless you tap the button, or turn on **Check once a day** (checked when you open the app, at most
+once a day). A copy you built yourself, or a `-debug-signed` test build, is signed with another key and is not updated
+this way: install the release by hand. End a call before installing; the app restarts.
+
 ## 4. Install the iPhone app
 
 The IPA is unsigned: a sideloading tool signs it with **your own** Apple ID on your computer or phone. Nobody else's

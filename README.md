@@ -133,6 +133,9 @@ Get the files from the [latest release](https://github.com/amirwmr/tether/releas
 **AltStore / SideStore source** (add it once, then install and update from the app):
 `https://github.com/amirwmr/tether/releases/latest/download/altstore.json`
 
+The Android apps update themselves from GitHub Releases when you ask them to (Help › **Check for updates**; there is
+no Google Play version): [Updating the Android apps](docs/INSTALL.md#updating-the-android-apps).
+
 With a free Apple ID the iPhone app has to be refreshed every 7 days (data and pairing are kept). Prefer to build it
 yourself? See [Quick start](#quick-start) and [docs/BUILD.md](docs/BUILD.md).
 

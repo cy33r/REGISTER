@@ -228,4 +228,28 @@
     <string name="link_diagnostics_subtitle">Connection and logs</string>
     <string name="link_sim_signal">Cellular signal %1$d/4 %2$s</string>
     <string name="link_plugged">(plugged in)</string>
+    <!-- Help › updates from GitHub Releases (#19); the same text in the Android app and the Android client. -->
+    <string name="update_check">Check for updates</string>
+    <string name="update_to">Update to %1$s</string>
+    <string name="update_install">Install the update</string>
+    <string name="update_daily_on">Check once a day</string>
+    <string name="update_daily_off">Stop the daily check</string>
+    <string name="update_checking">Asking GitHub for the latest release…</string>
+    <string name="update_up_to_date">%1$s is the latest version.</string>
+    <string name="update_available">Version %1$s is out (this is %2$s). It comes from the project\'s GitHub Releases, checked against SHA256SUMS and the app\'s signing key before it installs.</string>
+    <string name="update_download_title">Tether %1$s</string>
+    <string name="update_downloading">Downloading %1$s… %2$d %%</string>
+    <string name="update_verifying">Checking the download…</string>
+    <string name="update_ready">Version %1$s is downloaded and checked. Android asks you before it installs.</string>
+    <string name="update_installing">Waiting for Android\'s installer…</string>
+    <string name="update_permission">Android asks once whether Tether may install its own updates. Allow it on the next page, come back and tap Install the update again.</string>
+    <string name="update_open_settings">Open settings</string>
+    <string name="update_wait_for_call">End the call first: installing restarts the app.</string>
+    <string name="update_err_network">Could not reach GitHub. Check the internet connection and try again.</string>
+    <string name="update_err_no_apk">The latest release has no file for this app yet. Try again later, or download it from GitHub Releases.</string>
+    <string name="update_err_download">The download stopped. Try again.</string>
+    <string name="update_err_checksum">The download does not match the release\'s SHA256SUMS and was deleted. Try again.</string>
+    <string name="update_err_not_this_app">The downloaded file is not a newer version of this app and was deleted.</string>
+    <string name="update_err_other_key">This copy of the app is signed with a different key than the release (built by hand, or a test build), so it cannot be updated in place. Install the release from GitHub by hand.</string>
+    <string name="update_err_install">Android did not install the update. Try again, or install it from GitHub Releases.</string>
 </resources>

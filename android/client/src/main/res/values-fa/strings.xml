@@ -226,4 +226,28 @@
     <string name="link_diagnostics_subtitle">اتصال و گزارش‌ها</string>
     <string name="link_sim_signal">سیگنال شبکهٔ موبایل %1$d از ۴ %2$s</string>
     <string name="link_plugged">(متصل به برق)</string>
+    <!-- راهنما › به‌روزرسانی از GitHub Releases (#19)؛ همین متن در برنامهٔ اندروید و کلاینت اندروید. -->
+    <string name="update_check">بررسی به‌روزرسانی</string>
+    <string name="update_to">به‌روزرسانی به %1$s</string>
+    <string name="update_install">نصب به‌روزرسانی</string>
+    <string name="update_daily_on">بررسی روزی یک بار</string>
+    <string name="update_daily_off">توقف بررسی روزانه</string>
+    <string name="update_checking">در حال پرسیدن آخرین انتشار از GitHub…</string>
+    <string name="update_up_to_date">نسخهٔ %1$s آخرین نسخه است.</string>
+    <string name="update_available">نسخهٔ %1$s منتشر شده است (نسخهٔ فعلی: %2$s). این فایل از GitHub Releases پروژه دریافت می‌شود و پیش از نصب با SHA256SUMS و کلید امضای برنامه مقایسه می‌شود.</string>
+    <string name="update_download_title">Tether %1$s</string>
+    <string name="update_downloading">در حال دانلود %1$s… %2$d٪</string>
+    <string name="update_verifying">در حال بررسی فایل دانلودشده…</string>
+    <string name="update_ready">نسخهٔ %1$s دانلود و بررسی شد. اندروید پیش از نصب از شما می‌پرسد.</string>
+    <string name="update_installing">در انتظار نصب‌کنندهٔ اندروید…</string>
+    <string name="update_permission">اندروید یک بار می‌پرسد که آیا Tether اجازه دارد به‌روزرسانی‌های خودش را نصب کند. در صفحهٔ بعد اجازه بدهید، برگردید و دوباره «نصب به‌روزرسانی» را بزنید.</string>
+    <string name="update_open_settings">باز کردن تنظیمات</string>
+    <string name="update_wait_for_call">اول تماس را تمام کنید: نصب، برنامه را دوباره راه‌اندازی می‌کند.</string>
+    <string name="update_err_network">اتصال به GitHub برقرار نشد. اینترنت را بررسی کنید و دوباره امتحان کنید.</string>
+    <string name="update_err_no_apk">آخرین انتشار هنوز فایلی برای این برنامه ندارد. بعداً دوباره امتحان کنید یا آن را از GitHub Releases دانلود کنید.</string>
+    <string name="update_err_download">دانلود متوقف شد. دوباره امتحان کنید.</string>
+    <string name="update_err_checksum">فایل دانلودشده با SHA256SUMS انتشار یکی نیست و پاک شد. دوباره امتحان کنید.</string>
+    <string name="update_err_not_this_app">فایل دانلودشده نسخهٔ جدیدتری از این برنامه نیست و پاک شد.</string>
+    <string name="update_err_other_key">این نسخه از برنامه با کلیدی غیر از کلید انتشار امضا شده است (دستی ساخته شده یا نسخهٔ آزمایشی است)، پس نمی‌شود آن را از داخل برنامه به‌روز کرد. نسخهٔ منتشرشده را دستی از GitHub نصب کنید.</string>
+    <string name="update_err_install">اندروید به‌روزرسانی را نصب نکرد. دوباره امتحان کنید یا آن را از GitHub Releases نصب کنید.</string>
 </resources>

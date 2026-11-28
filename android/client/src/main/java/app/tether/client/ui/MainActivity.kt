@@ -3,6 +3,8 @@ package app.tether.client.ui
 import app.tether.client.model.BatteryAlert
 import app.tether.client.report.ClientReport
 import app.tether.client.report.ReportUi
+import app.tether.client.update.UpdateUi
+import app.tether.client.update.Updater
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
@@ -50,6 +52,7 @@ class MainActivity : Activity() {
     private val tabs = ArrayList<TabView>()
     private var tab = TAB_KEYPAD
     private val listener: () -> Unit = { render() }
+    private val updater by lazy { Updater.get(this, "Tether-Client") }
     private var query = ""
     private var number = StringBuilder()
     private var list: ListView? = null
@@ -101,6 +104,8 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         app.addListener(listener)
+        updater.addListener(listener)
+        updater.maybeCheckDaily()
         app.appVisible = true
         if (app.calls.hasCalls) app.service(callMode = true)
         render()
@@ -108,6 +113,7 @@ class MainActivity : Activity() {
 
     override fun onPause() {
         app.removeListener(listener)
+        updater.removeListener(listener)
         app.appVisible = false
         super.onPause()
     }
@@ -1016,6 +1022,14 @@ class MainActivity : Activity() {
             button(getString(R.string.report_title), Look.TONAL) { ReportUi.send(this) { ClientReport.build(app) } },
         ))
         me.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
+        // Updates from GitHub Releases (#19), as on the Android phone: only when asked, or once a day if turned on.
+        me.addView(row(
+            *(UpdateUi.button(this, updater)?.let { t ->
+                arrayOf(button(t, Look.TONAL) { UpdateUi.onTap(this, updater, app.calls.hasCalls) })
+            } ?: emptyArray()),
+            button(UpdateUi.dailyButton(this, updater), Look.OUTLINED) { updater.daily = !updater.daily },
+        ))
+        UpdateUi.status(this, updater)?.let { me.addView(label(it, R.color.muted, 13f)) }
         me.addView(row(
             button(getString(R.string.link_log), Look.TONAL) { showLog() },
             *(if (connected) arrayOf(button(getString(R.string.selftest), Look.TONAL) { s.runSelftest() }) else emptyArray()),

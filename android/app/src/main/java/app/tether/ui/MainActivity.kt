@@ -41,6 +41,9 @@ import app.tether.link.LinkLog
 import app.tether.link.LinkService
 import app.tether.report.PhoneReport
 import app.tether.report.ReportUi
+import app.tether.telecom.CallRegistry
+import app.tether.update.UpdateUi
+import app.tether.update.Updater
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -54,6 +57,7 @@ class MainActivity : Activity() {
     private var qrBitmap: Bitmap? = null
     private var qrLegacy = false
     private val listener: () -> Unit = { main.post { render() } }
+    private val updater by lazy { Updater.get(this, "Tether-A54") }
 
     /** Runtime permissions this Android version knows: Bluetooth ones from 12, notifications from 13. */
     private val perms = (
@@ -76,12 +80,15 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         app.hub.addListener(listener)
+        updater.addListener(listener)
+        updater.maybeCheckDaily()
         render()
         tick()
     }
 
     override fun onPause() {
         app.hub.removeListener(listener)
+        updater.removeListener(listener)
         main.removeCallbacksAndMessages(null)
         super.onPause()
     }
@@ -339,6 +346,12 @@ class MainActivity : Activity() {
         val help = card(getString(R.string.section_help))
         help.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
         help.addView(button(getString(R.string.report_title)) { ReportUi.send(this) { PhoneReport.build(app) } })
+        // Updates from GitHub Releases (#19): only when asked, or once a day if turned on.
+        UpdateUi.button(this, updater)?.let { t ->
+            help.addView(button(t, secondary = true) { UpdateUi.onTap(this, updater, CallRegistry.active().isNotEmpty()) })
+        }
+        help.addView(button(UpdateUi.dailyButton(this, updater), secondary = true) { updater.daily = !updater.daily })
+        UpdateUi.status(this, updater)?.let { help.addView(label(it, R.color.muted, 13f)) }
     }
 
     /**

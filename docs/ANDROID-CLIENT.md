@@ -60,6 +60,10 @@ and call history. The SIM phone stays in a bag; you use the other phone.
 - **Link screen**: the SIM phone's battery (with a low-battery alert: a notification at a chosen level and every 5 % below it, in its own notification category; `model/BatteryAlert.kt`) and signal per SIM, the connected devices, the switches (mobile data,
   data SIM, hotspot, Bluetooth tethering, airplane mode, network mode per SIM, Share VPN), the audio self-test, the
   Link log, **Send a problem report** (one `.txt` file for an issue, numbers and names removed), pairing and unpairing.
+- **Updates** (Link › This phone › Check for updates): the same code as the Android app's Help card (`client/.../update`, a copy of `app/.../update`):
+  `Tether-Client-<version>.apk` from the latest GitHub release, checked against `SHA256SUMS` and the installed app's
+  signing key, installed through Android's installer after the user confirms. See
+  [Updating the Android apps](INSTALL.md#updating-the-android-apps).
 - **tel: links**: `ACTION_DIAL`, `ACTION_VIEW` and `ACTION_CALL` for `tel:` are registered, so tapping a number in
   another app offers "Call with Tether Client" (the keypad, or a call at once for `ACTION_CALL` while linked).
 - Numbers are shown with `PhoneNumberUtils.formatNumber` and this phone's country, left-to-right in Persian too.

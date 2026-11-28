@@ -6,6 +6,11 @@ Tether carries calls, texts, contacts and call history between two phones you ow
 those two devices can read or inject anything on the link, and no third party is involved at all.
 
 - **No server, no account, no internet.** The phones talk directly over Bluetooth.
+- **Updates** (the two Android apps, Help › Check for updates) are the only internet the apps use themselves, and only
+  when the user asks or turned on the daily check: they read `api.github.com/repos/amirwmr/tether/releases/latest`
+  and download the release's own APK and `SHA256SUMS` from GitHub. The APK is installed only if its SHA-256 matches
+  `SHA256SUMS`, it is this app with a higher version, and it is signed with the same key as the installed app; then
+  Android's installer asks the user. A build signed with any other key is never offered.
 - **Pairing**: the Android phone shows a QR code with its long-term P-256 public key and a random one-time token,
   valid for 5 minutes. The iPhone scans it, so it learns the right key out of band; the token proves the iPhone
   was shown the code. After pairing, each side stores the other's public key.
