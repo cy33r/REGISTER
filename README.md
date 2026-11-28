@@ -107,13 +107,26 @@
 
 ## ‏حمایت مالی ❤️
 
-‏اگر REGISTER به کارتان آمده و دوست دارید از ادامهٔ کار حمایت کنید، می‌توانید به یکی از این نشانی‌ها کمک کنید. هر مبلغی ارزشمند است.
+‏اگر REGISTER به کارتان آمده و دوست دارید از ادامهٔ کار حمایت کنید، می‌توانید به یکی از این نشانی‌ها کمک کنید. هر مبلغی ارزشمند است. برای کپی، روی دکمهٔ 📋 کنار نشانی بزنید.
 
-| ‏ارز | ‏نشانی |
-| ---: | ---: |
-| ‏**تتر (USDT)** — شبکهٔ BEP20 | `0x79d5066C6Aa7a3EDbeEf44dAfe99deDFe6BF43f4` |
-| ‏**بیت‌کوین (BTC)** | `bc1qd049lqfkg9p7pqu5j92dxsf4p7et889mduandp` |
+### ‏💵 تتر — USDT
 
-‏⚠️ تتر را فقط از شبکهٔ **BEP20** (BNB Smart Chain) بفرستید؛ ارسال از شبکهٔ دیگر ممکن است باعث از دست رفتن مبلغ شود.
+![USDT](https://img.shields.io/badge/USDT-BEP20-26A17B?style=for-the-badge&logo=tether&logoColor=white)
+![BNB SMART CHAIN](https://img.shields.io/badge/NETWORK-BNB%20SMART%20CHAIN-F0B90B?style=for-the-badge&logo=binance&logoColor=white)
+
+```text
+0x79d5066C6Aa7a3EDbeEf44dAfe99deDFe6BF43f4
+```
+
+### ‏🪙 بیت‌کوین — BTC
+
+![BTC](https://img.shields.io/badge/BTC-BITCOIN-F7931A?style=for-the-badge&logo=bitcoin&logoColor=white)
+
+```text
+bc1qd049lqfkg9p7pqu5j92dxsf4p7et889mduandp
+```
+
+> [!WARNING]
+> ‏تتر را فقط از شبکهٔ **BEP20 (BNB SMART CHAIN)** بفرستید. ارسال از شبکهٔ دیگر ممکن است باعث از دست رفتن مبلغ شود.
 
 </div>
