@@ -54,7 +54,8 @@ private val FA_DIGITS = Regex("(?<![A-Za-z0-9.:/\\-])[0-9]+(?![0-9A-Za-z:/\\-]|\
 class MainActivity : Activity() {
     private lateinit var app: TetherApp
     private lateinit var root: LinearLayout
-    private var advanced = false
+    private lateinit var scroller: ScrollView
+    private val advanced get() = page == Page.ADVANCED
     /** REGISTER: Persian (right to left, Persian digits) or English (capitals, a touch smaller and spaced out). */
     private val isFa by lazy { UiPrefs.isFa(this) }
     private val dir get() = if (isFa) View.TEXT_DIRECTION_RTL else View.TEXT_DIRECTION_LTR
@@ -83,8 +84,9 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.decorView.layoutDirection = if (UiPrefs.isFa(this)) android.view.View.LAYOUT_DIRECTION_RTL else android.view.View.LAYOUT_DIRECTION_LTR   // REGISTER: Persian, right to left
         app = application as TetherApp
-        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(24), dp(16), dp(24)) }
-        setContentView(ScrollView(this).apply { addView(root); setBackgroundColor(color(R.color.background)) })
+        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(20), dp(16), dp(28)) }
+        scroller = ScrollView(this).apply { addView(root); setBackgroundColor(color(R.color.background)); isFillViewport = true }
+        setContentView(scroller)
         if (missingPerms().isEmpty()) LinkService.start(this) else requestPermissions(missingPerms(), 1)
     }
 
@@ -162,17 +164,99 @@ class MainActivity : Activity() {
     }
 
 
+    /** REGISTER: the home screen and the pages its rows open. */
+    private enum class Page { HOME, SETUP, AUDIO, LOOK, ADVANCED, ABOUT }
+    private var page = Page.HOME
+
+    private fun open(p: Page) { page = p; updateBack(); render(); scroller.scrollTo(0, 0) }
+
     private fun render() {
         root.removeAllViews()
-        root.addView(TextView(this).apply {
-            text = getString(R.string.app_name); textSize = 26f; setTypeface(typeface, Typeface.BOLD); setTextColor(color(R.color.text))
-            textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
-            setPadding(dp(4), 0, dp(4), 0)
-        })
-        root.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.muted, 13f).apply { setPadding(dp(4), 0, dp(4), dp(14)) })
+        when (page) {
+            Page.HOME -> renderHome()
+            Page.SETUP -> sub(R.string.section_setup) { setupSection(card(null)) }
+            Page.AUDIO -> sub(R.string.section_audio) { audioSection(card(null)) }
+            Page.LOOK -> sub(R.string.section_language) { lookSection(card(null)) }
+            Page.ADVANCED -> sub(R.string.section_advanced) { advancedSection(card(null)) }
+            Page.ABOUT -> sub(R.string.section_about) { aboutSection(card(null)) }
+        }
+    }
 
-        // Link
-        val link = card(getString(R.string.section_link))
+    private fun renderHome() {
+        // Header: the app's icon, name and version.
+        val head = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(6), dp(4), dp(6), dp(18))
+        }
+        head.addView(ImageView(this).apply {
+            setImageResource(R.mipmap.ic_launcher)
+            layoutParams = LinearLayout.LayoutParams(dp(46), dp(46)).apply { marginEnd = dp(12) }
+        })
+        val names = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        names.addView(oneLine(getString(R.string.app_name), R.color.text, 22f, bold = true))
+        names.addView(oneLine(getString(R.string.version_label, ltr(appVersion())), R.color.muted, 13f))
+        head.addView(names)
+        root.addView(head)
+
+        // The link: state, paired iPhones, pairing.
+        val link = card(null)
+        linkSection(link)
+
+        // Setup: in full until every step is done, then one line.
+        val steps = setupSteps()
+        val done = steps.count { it }
+        if (done < steps.size) {
+            setupSection(card(getString(R.string.section_setup)))
+        } else {
+            val g = group(null)
+            g.addView(row(R.drawable.ic_check, R.color.ok, getString(R.string.setup_complete),
+                fa(getString(R.string.n_of_m, done, steps.size)), last = true) { open(Page.SETUP) })
+        }
+
+        // Settings.
+        val h = app.hub.audio.helperStatus()
+        val running = h.optString("state") == "running"
+        val g = group(getString(R.string.section_settings))
+        g.addView(row(R.drawable.ic_call, R.color.tile_orange, getString(R.string.section_audio),
+            getString(if (running) R.string.helper_on else R.string.helper_stopped), valueColor = if (running) R.color.muted else R.color.warn) { open(Page.AUDIO) })
+        g.addView(row(R.drawable.ic_text_fields, R.color.tile_blue, getString(R.string.section_language),
+            getString(if (isFa) R.string.lang_fa else R.string.lang_en) + " · " + getString(when (UiPrefs.theme(this)) {
+                "light" -> R.string.theme_light; "dark" -> R.string.theme_dark; else -> R.string.theme_system })) { open(Page.LOOK) })
+        g.addView(row(R.drawable.ic_link_overflow, R.color.tile_gray, getString(R.string.section_advanced), null) { open(Page.ADVANCED) })
+        g.addView(row(R.drawable.ic_link_diagnostics, R.color.tile_purple, getString(R.string.report_title), null) {
+            ReportUi.send(this) { PhoneReport.build(app) } })
+        val news = updater.state.let { it is Updater.State.Available || it is Updater.State.Ready }
+        g.addView(row(R.drawable.ic_history, R.color.tile_green, getString(R.string.section_about_update), null,
+            badge = if (news) getString(R.string.badge_new) else null, last = true) { open(Page.ABOUT) })
+    }
+
+    /** A page: a back row with its title, then its content. */
+    private fun sub(title: Int, content: () -> Unit) {
+        val bar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, 0, 0, dp(14))
+        }
+        bar.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_arrow_back); setColorFilter(color(R.color.accent))
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
+            contentDescription = getString(R.string.action_back)
+            setOnClickListener { open(Page.HOME) }
+        })
+        bar.addView(oneLine(getString(title), R.color.text, 21f, bold = true).apply {
+            layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(4) } })
+        root.addView(bar)
+        content()
+    }
+
+    private fun setupSteps(): List<Boolean> {
+        val pm = getSystemService(PowerManager::class.java)
+        val list = mutableListOf(missingPerms().isEmpty(), app.sims.isDialer(), pm.isIgnoringBatteryOptimizations(packageName))
+        if (android.os.Build.VERSION.SDK_INT >= 30) list += Adb.hasSecureSettings(this) && app.prefs.getBoolean("adb_paired", false)
+        return list
+    }
+
+    private fun linkSection(link: LinearLayout) {
         val svc = LinkService.running
         val conn = app.hub.conn
         val (state, stateColor) = when {
@@ -181,16 +265,16 @@ class MainActivity : Activity() {
             !app.keys.isPaired -> getString(R.string.state_unpaired) to R.color.warn
             else -> getString(R.string.state_waiting) to R.color.muted
         }
-        link.addView(label(state, stateColor, 16f).apply { setTypeface(typeface, Typeface.BOLD) })
+        link.addView(statusLine(state, stateColor))
         // Paired devices: connected ones are marked; each can be removed on its own.
         val live = app.hub.targets()
         for (cl in app.keys.centrals()) {
             val on = live.any { it.peerKey.contentEquals(cl.key) }
             val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, 0) }
-            r.addView(label((if (on) "● " else "○ ") + cl.name + (if (on) " · " + getString(R.string.state_connected) else ""),
+            r.addView(label((if (on) "● " else "○ ") + cl.name.uppercase() + (if (on) " · " + getString(R.string.state_connected) else ""),
                 if (on) R.color.ok else R.color.muted, 14f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
             r.addView(smallButton(getString(R.string.unpair)) {
-                AlertDialog.Builder(this).setMessage(getString(R.string.unpair_confirm_named, cl.name))
+                AlertDialog.Builder(this).setMessage(getString(R.string.unpair_confirm_named, cl.name.uppercase()))
                     .setPositiveButton(R.string.unpair) { _, _ ->
                         app.keys.removeCentral(cl.key)
                         app.hub.conns.filter { it.peerKey.contentEquals(cl.key) }.forEach { it.close("unpaired") }
@@ -219,8 +303,9 @@ class MainActivity : Activity() {
         }
         if (qrUntil == 0L) link.addView(button(getString(R.string.pair_iphone), full = true) { showQr() })
 
-        // Setup
-        val setup = card(getString(R.string.section_setup))
+    }
+
+    private fun setupSection(setup: LinearLayout) {
         setup.addView(label(getString(R.string.setup_intro), R.color.muted, 13f))
         setup.addView(step(getString(R.string.step_n, 1, getString(R.string.step_permissions)), missingPerms().isEmpty(), getString(R.string.action_grant),
             help = getString(R.string.help_permissions)) {
@@ -246,8 +331,9 @@ class MainActivity : Activity() {
 
         if (!app.keys.isPaired && qrUntil == 0L) setup.addView(label(getString(R.string.help_pair_next), R.color.accent, 14f))
 
-        // Audio
-        val audio = card(getString(R.string.section_audio))
+    }
+
+    private fun audioSection(audio: LinearLayout) {
         // Call audio: interception API on Android 13+, voice-call capture on 11-12, nothing on 10.
         when (app.hub.helper.audioLevel()) {
             "unavailable" -> audio.addView(label(getString(R.string.audio_needs_android11), R.color.warn, 13f))
@@ -276,12 +362,12 @@ class MainActivity : Activity() {
         // call where the phone allows it (MicPath); muting it is opt-in, since on some phones that also mutes the iPhone.
         if (app.hub.helper.audioLevel() != "unavailable") {
             val mic = app.hub.audio.mic
-            audio.addView(label(getString(R.string.mic_title), R.color.text, 16f))
+            audio.addView(oneLine(getString(R.string.mic_title), R.color.text, 15f, bold = true).apply { setPadding(0, dp(12), 0, dp(2)) })
             val group = RadioGroup(this).apply { orientation = RadioGroup.VERTICAL; setPadding(0, dp(2), 0, dp(2)) }
             for ((choice, text) in listOf(MicPath.Setting.AUTO to R.string.mic_choice_auto, MicPath.Setting.MUTE to R.string.mic_choice_mute,
                     MicPath.Setting.OPEN to R.string.mic_choice_open)) {
                 group.addView(RadioButton(this).apply {
-                    id = View.generateViewId(); this.text = fa(getString(text)); textSize = 15f; setTextColor(color(R.color.text))
+                    id = View.generateViewId(); this.text = fa(getString(text)); textSize = sized(14f); setTextColor(color(R.color.text))
                     textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
                     isChecked = choice == mic
                     // A click sets it; on the one already chosen it also forgets what the redirect modes did here, so they are tried anew.
@@ -334,12 +420,11 @@ class MainActivity : Activity() {
         })
         audio.addView(label(getString(R.string.call_screen_bridged_note), R.color.muted, 13f))
 
-        // Advanced: the technical options, hidden until asked for.
-        val adv = card(getString(R.string.section_advanced))
-        adv.addView(button(getString(if (advanced) R.string.advanced_hide else R.string.advanced_show), secondary = true, full = true) {
-            advanced = !advanced; render()
-        })
-        if (advanced) {
+    }
+
+    private fun advancedSection(adv: LinearLayout) {
+        val h = app.hub.audio.helperStatus()
+        val running = h.optString("state") == "running"
         // Legacy TCP adb: opt-in, for Android 10 (no Wireless debugging) or a phone without a trusted Wi-Fi network.
         val tcpOn = app.prefs.getBoolean(Adb.PREF_LEGACY, false)
         val tcpPort = app.prefs.getInt(Adb.PREF_LEGACY_PORT, ConnectOrder.DEFAULT_LEGACY_PORT)
@@ -360,24 +445,20 @@ class MainActivity : Activity() {
         }
         adv.addView(button(getString(R.string.action_selftest), secondary = true, full = true) { Thread { app.hub.selftest() }.start() })
         adv.addView(button(getString(R.string.link_log), secondary = true, full = true) { showLinkLog() })
-        }
+    }
 
-        // Help: one file with what is needed to find any problem (docs/TROUBLESHOOTING.md, "What to include in a report").
-        val help = card(getString(R.string.section_help))
-        help.addView(label(getString(R.string.report_hint), R.color.muted, 13f))
-        help.addView(button(getString(R.string.report_title), full = true) { ReportUi.send(this) { PhoneReport.build(app) } })
-
-        // Language and look: chosen here, whatever the phone's own settings are.
-        val look = card(getString(R.string.section_language) + " · " + getString(R.string.section_theme))
+    private fun lookSection(look: LinearLayout) {
+        look.addView(oneLine(getString(R.string.section_language), R.color.muted, 13f))
         look.addView(segmented(listOf(UiPrefs.FA to getString(R.string.lang_fa), UiPrefs.EN to getString(R.string.lang_en)),
             UiPrefs.lang(this)) { UiPrefs.setLang(this, it) })
+        look.addView(oneLine(getString(R.string.section_theme), R.color.muted, 13f).apply { setPadding(0, dp(14), 0, 0) })
         look.addView(segmented(listOf("system" to getString(R.string.theme_system), "light" to getString(R.string.theme_light),
             "dark" to getString(R.string.theme_dark)), UiPrefs.theme(this)) { UiPrefs.setTheme(this, it) })
+    }
 
-        // About: the version, and updates from this project's GitHub Releases (only when asked, or once a day if on).
-        val about = card(getString(R.string.section_about))
+    private fun aboutSection(about: LinearLayout) {
         about.addView(label(getString(R.string.about_text), R.color.muted, 13f))
-        about.addView(label(getString(R.string.version_label, ltr(appVersion())), R.color.text, 15f).apply { setTypeface(typeface, Typeface.BOLD) })
+        about.addView(oneLine(getString(R.string.version_label, ltr(appVersion())), R.color.text, 15f, bold = true).apply { setPadding(0, dp(8), 0, 0) })
         UpdateUi.button(this, updater)?.let { t ->
             about.addView(button(t, full = true) { UpdateUi.onTap(this, updater, CallRegistry.active().isNotEmpty()) })
         }
@@ -469,11 +550,9 @@ class MainActivity : Activity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun color(id: Int) = getColor(id)
 
-    /** An iPhone-style grouped section: a quiet heading above a rounded card. */
-    private fun card(title: String): LinearLayout {
-        root.addView(label(title.uppercase(), R.color.muted, 13f).apply {
-            setPadding(dp(18), dp(6), dp(18), dp(6)); setTypeface(typeface, Typeface.BOLD)
-        })
+    /** An iPhone-style grouped section: a quiet heading (optional) above a rounded card. */
+    private fun card(title: String?): LinearLayout {
+        if (title != null) root.addView(oneLine(title.uppercase(), R.color.muted, 13f).apply { setPadding(dp(16), dp(2), dp(16), dp(7)) })
         val c = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(12), dp(16), dp(14))
@@ -534,6 +613,97 @@ class MainActivity : Activity() {
         return row
     }
 
+    /** A list group: rows with hairlines between them, no inner padding. */
+    private fun group(title: String?): LinearLayout {
+        if (title != null) root.addView(oneLine(title.uppercase(), R.color.muted, 13f).apply { setPadding(dp(16), dp(2), dp(16), dp(7)) })
+        val c = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply { setColor(color(R.color.surface)); cornerRadius = dp(14).toFloat() }
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(18) }
+            clipToOutline = true
+        }
+        root.addView(c)
+        return c
+    }
+
+    /** One settings row: a coloured icon tile, the title and a value on one line each, and a chevron. */
+    private fun row(icon: Int, tile: Int, title: String, value: String?, valueColor: Int = R.color.muted,
+                    badge: String? = null, last: Boolean = false, onClick: () -> Unit): View {
+        val wrap = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val r = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(14), dp(11), dp(12), dp(11)); minimumHeight = dp(52)
+            isClickable = true; isFocusable = true
+            background = android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(color(R.color.fill)), null,
+                android.graphics.drawable.ColorDrawable(Color.WHITE))
+            setOnClickListener { onClick() }
+        }
+        r.addView(ImageView(this).apply {
+            setImageResource(icon); setColorFilter(Color.WHITE)
+            setPadding(dp(5), dp(5), dp(5), dp(5))
+            background = GradientDrawable().apply { setColor(color(tile)); cornerRadius = dp(8).toFloat() }
+            layoutParams = LinearLayout.LayoutParams(dp(30), dp(30)).apply { marginEnd = dp(12) }
+        })
+        r.addView(oneLine(title, R.color.text, 15f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+        if (value != null) r.addView(oneLine(value, valueColor, 13f).apply {
+            layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }; maxWidth = dp(150) })
+        if (badge != null) r.addView(oneLine(badge, R.color.on_accent, 11f, bold = true).apply {
+            setPadding(dp(8), dp(2), dp(8), dp(2))
+            background = GradientDrawable().apply { setColor(color(R.color.bad)); cornerRadius = dp(10).toFloat() }
+            layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) }
+        })
+        r.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_link_chevron); setColorFilter(color(R.color.muted)); alpha = 0.6f
+            layoutParams = LinearLayout.LayoutParams(dp(18), dp(18)).apply { marginStart = dp(6) }
+        })
+        wrap.addView(r)
+        if (!last) wrap.addView(View(this).apply {
+            setBackgroundColor(color(R.color.hairline))
+            layoutParams = LinearLayout.LayoutParams(-1, 1).apply { marginStart = dp(56) }
+        })
+        return wrap
+    }
+
+    /** A text that stays on one line (cut with … when it does not fit), in the app's direction. */
+    private fun oneLine(t: String, colorId: Int, size: Float, bold: Boolean = false) = TextView(this).apply {
+        text = fa(t); textSize = sized(size); setTextColor(color(colorId)); maxLines = 1; isSingleLine = true
+        ellipsize = android.text.TextUtils.TruncateAt.END
+        textDirection = dir; textAlignment = View.TEXT_ALIGNMENT_VIEW_START
+        if (bold) setTypeface(typeface, Typeface.BOLD)
+        if (!isFa) letterSpacing = 0.03f
+    }
+
+    /** The link's state: a coloured dot and the state in bold. */
+    private fun statusLine(t: String, colorId: Int): View {
+        val r = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        r.addView(View(this).apply {
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color(colorId)) }
+            layoutParams = LinearLayout.LayoutParams(dp(10), dp(10)).apply { marginEnd = dp(8) }
+        })
+        r.addView(oneLine(t, colorId, 16f, bold = true).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+        return r
+    }
+
+    /** Back goes home from a page (Android 13+ through the back dispatcher, which Android 16 apps must use). */
+    private var backCallback: Any? = null
+
+    private fun updateBack() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        val d = onBackInvokedDispatcher
+        (backCallback as? android.window.OnBackInvokedCallback)?.let { d.unregisterOnBackInvokedCallback(it) }
+        backCallback = null
+        if (page != Page.HOME) {
+            val cb = android.window.OnBackInvokedCallback { open(Page.HOME) }
+            d.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb)
+            backCallback = cb
+        }
+    }
+
+    @Deprecated("Android 12 and older")
+    override fun onBackPressed() {
+        if (page != Page.HOME) open(Page.HOME) else @Suppress("DEPRECATION") super.onBackPressed()
+    }
+
     /** A small text button for a row (unpair). */
     private fun smallButton(t: String, onClick: () -> Unit) = Button(this).apply {
         text = fa(t); isAllCaps = false; textSize = 13f; setTextColor(color(R.color.bad))
@@ -548,9 +718,13 @@ class MainActivity : Activity() {
                      onClick: () -> Unit): View {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(10), 0, dp(10)) }
         val head = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        head.addView(label(title, R.color.text, 16f).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
-        head.addView(label(detail ?: getString(if (done) R.string.done else R.string.missing), if (done) R.color.ok else R.color.warn, 13f).apply {
-            layoutParams = LinearLayout.LayoutParams(-2, -2); textAlignment = View.TEXT_ALIGNMENT_VIEW_END })
+        head.addView(View(this).apply {
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color(if (done) R.color.ok else R.color.warn)) }
+            layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply { marginEnd = dp(10) }
+        })
+        head.addView(oneLine(title, R.color.text, 15f, bold = true).apply { layoutParams = LinearLayout.LayoutParams(0, -2, 1f) })
+        head.addView(oneLine(detail ?: getString(if (done) R.string.done else R.string.missing), if (done) R.color.ok else R.color.warn, 13f).apply {
+            layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) } })
         box.addView(head)
         // What to do, in plain words, until the step is done.
         if (!done && help != null) box.addView(label(help, R.color.muted, 13f))

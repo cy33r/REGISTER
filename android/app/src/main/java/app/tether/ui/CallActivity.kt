@@ -38,8 +38,19 @@ class CallActivity : Activity() {
             orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; setBackgroundColor(getColor(R.color.background))
             setPadding(dp(24), dp(24), dp(24), dp(24))
         }
-        title = TextView(this).apply { textSize = 30f; setTextColor(getColor(R.color.text)); gravity = Gravity.CENTER; textDirection = android.view.View.TEXT_DIRECTION_FIRST_STRONG_LTR }
-        state = TextView(this).apply { textSize = 16f; setTextColor(getColor(R.color.muted)); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(40)) }
+        // REGISTER: an iPhone-like call screen: a round avatar, the name, the state, and round icon buttons with labels.
+        root.addView(android.widget.ImageView(this).apply {
+            setImageResource(R.drawable.ic_person); setColorFilter(getColor(R.color.on_accent))
+            setPadding(dp(22), dp(22), dp(22), dp(22))
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(getColor(R.color.tile_gray)) }
+            layoutParams = LinearLayout.LayoutParams(dp(96), dp(96)).apply { bottomMargin = dp(18) }
+        })
+        title = TextView(this).apply {
+            textSize = 28f; setTextColor(getColor(R.color.text)); gravity = Gravity.CENTER
+            textDirection = android.view.View.TEXT_DIRECTION_FIRST_STRONG_LTR; maxLines = 2
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        state = TextView(this).apply { textSize = 15f; setTextColor(getColor(R.color.muted)); gravity = Gravity.CENTER; setPadding(0, dp(6), 0, dp(64)) }
         buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
         root.addView(title); root.addView(state); root.addView(buttons)
         setContentView(root)
@@ -84,24 +95,36 @@ class CallActivity : Activity() {
         })
         buttons.removeAllViews()
         if (info.state == "ringing") {
-            buttons.addView(round(getString(R.string.decline), R.color.call_red) { CallRegistry.reject(info.cid) })
-            buttons.addView(round(getString(R.string.answer), R.color.call_green) { CallRegistry.answer(info.cid) })
+            buttons.addView(round(getString(R.string.decline), R.color.call_red, R.drawable.ic_call_end) { CallRegistry.reject(info.cid) })
+            buttons.addView(round(getString(R.string.answer), R.color.call_green, R.drawable.ic_call) { CallRegistry.answer(info.cid) })
         } else {
-            buttons.addView(round(getString(R.string.speaker), if (speaker) R.color.accent else R.color.muted) {
+            buttons.addView(round(getString(R.string.speaker), if (speaker) R.color.accent else R.color.tile_gray, R.drawable.ic_speaker) {
                 speaker = !speaker; CallRegistry.speaker(speaker)
             })
-            buttons.addView(round(getString(R.string.end_call), R.color.call_red) { CallRegistry.end(info.cid) })
+            buttons.addView(round(getString(R.string.end_call), R.color.call_red, R.drawable.ic_call_end) { CallRegistry.end(info.cid) })
         }
         main.postDelayed(::refresh, 500)
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private fun round(t: String, colorId: Int, onClick: () -> Unit) = Button(this).apply {
-        text = t; isAllCaps = false; setTextColor(getColor(R.color.on_accent))
-        background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(getColor(colorId)) }
-        layoutParams = LinearLayout.LayoutParams(dp(96), dp(96)).apply { marginStart = dp(16); marginEnd = dp(16) }
-        setOnClickListener { onClick(); main.postDelayed(::refresh, 200) }
+    private fun round(t: String, colorId: Int, icon: Int, onClick: () -> Unit): android.view.View {
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(22); marginEnd = dp(22) }
+        }
+        col.addView(android.widget.ImageView(this).apply {
+            setImageResource(icon); setColorFilter(getColor(R.color.on_accent))
+            setPadding(dp(20), dp(20), dp(20), dp(20))
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(getColor(colorId)) }
+            layoutParams = LinearLayout.LayoutParams(dp(76), dp(76))
+            contentDescription = t
+            setOnClickListener { onClick(); main.postDelayed(::refresh, 200) }
+        })
+        col.addView(TextView(this).apply {
+            text = t; textSize = 13f; setTextColor(getColor(R.color.text)); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0)
+        })
+        return col
     }
 }
 

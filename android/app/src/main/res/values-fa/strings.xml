@@ -105,7 +105,7 @@
     <string name="mic_mute_unsupported">روی این گوشی بی‌صدا کردن ممکن نیست؛ میکروفون روشن می‌ماند.</string>
     <string name="mic_mute_blocked">بی‌صدا کردن صدای شما را هم قطع کرد، پس خاموش شد. برای امتحان دوباره، دوباره انتخابش کنید.</string>
     <string name="helper_capture">دریافت %1$s</string>
-    <string name="mic_title">میکروفون این گوشی هنگام تماس با آیفون</string>
+    <string name="mic_title">میکروفون این گوشی در تماس</string>
     <string name="mic_choice_auto">خاموش در تماس (پیشنهادی)</string>
     <string name="mic_choice_mute">بی‌صدا</string>
     <string name="mic_choice_open">روشن</string>
@@ -179,4 +179,10 @@
     <string name="theme_system">مثل گوشی</string>
     <string name="theme_light">روشن</string>
     <string name="theme_dark">تیره</string>
+    <string name="setup_complete">راه‌اندازی کامل است</string>
+    <string name="n_of_m">%1$d از %2$d</string>
+    <string name="section_settings">تنظیمات</string>
+    <string name="section_about_update">درباره و آپدیت</string>
+    <string name="badge_new">جدید</string>
+    <string name="action_back">بازگشت</string>
 </resources>

@@ -105,7 +105,7 @@
     <string name="mic_mute_unsupported">MUTING IS NOT POSSIBLE ON THIS PHONE; THE MICROPHONE STAYS ON.</string>
     <string name="mic_mute_blocked">MUTING ALSO CUT YOUR VOICE, SO IT WAS TURNED OFF. PICK IT AGAIN TO RETRY.</string>
     <string name="helper_capture">CAPTURE %1$s</string>
-    <string name="mic_title">THIS PHONE\'S MICROPHONE DURING IPHONE CALLS</string>
+    <string name="mic_title">THIS PHONE\'S MICROPHONE IN CALLS</string>
     <string name="mic_choice_auto">OFF DURING CALLS (RECOMMENDED)</string>
     <string name="mic_choice_mute">MUTED</string>
     <string name="mic_choice_open">ON</string>
@@ -179,4 +179,10 @@
     <string name="theme_system">LIKE THE PHONE</string>
     <string name="theme_light">LIGHT</string>
     <string name="theme_dark">DARK</string>
+    <string name="setup_complete">SETUP IS COMPLETE</string>
+    <string name="n_of_m">%1$d OF %2$d</string>
+    <string name="section_settings">SETTINGS</string>
+    <string name="section_about_update">ABOUT AND UPDATES</string>
+    <string name="badge_new">NEW</string>
+    <string name="action_back">BACK</string>
 </resources>

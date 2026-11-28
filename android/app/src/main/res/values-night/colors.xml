@@ -6,6 +6,12 @@
     <color name="surface">#1C1C1E</color>
     <color name="fill">#2C2C2E</color>
     <color name="surface_raised">#5A5A5E</color>
+    <color name="tile_orange">#FF9F0A</color>
+    <color name="tile_blue">#0A84FF</color>
+    <color name="tile_gray">#636366</color>
+    <color name="tile_purple">#BF5AF2</color>
+    <color name="tile_green">#30D158</color>
+    <color name="hairline">#33545458</color>
     <color name="text">#F2F2F7</color>
     <color name="muted">#8E8E93</color>
     <color name="ok">#30D158</color>

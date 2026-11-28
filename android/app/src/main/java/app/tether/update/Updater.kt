@@ -57,7 +57,7 @@ class Updater private constructor(private val ctx: Context, private val apkPrefi
 
     /** The daily check: off unless the user turns it on. */
     var daily: Boolean
-        get() = prefs.getBoolean(KEY_DAILY, false)
+        get() = prefs.getBoolean(KEY_DAILY, true)   // REGISTER: on by default
         set(on) { prefs.edit().putBoolean(KEY_DAILY, on).apply(); notifyChanged() }
 
     /** Called when the app's main screen opens: checks if the daily check is on and the last check is a day old. */
